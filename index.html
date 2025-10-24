@@ -677,7 +677,7 @@ async function initFirebase() {
         // Clear local data
         entries = [];
         settings = {};
-        refreshAll(); // Clear charts/tables
+        renderWithFilters(); // MODIFIED: Call new render function
       }
     });
 
@@ -803,7 +803,7 @@ function listenForEntries() {
     console.log(`Loaded ${entries.length} entries.`);
     
     // CRITICAL: Refresh the entire UI whenever data changes
-    refreshAll();
+    renderWithFilters(); // MODIFIED: Call new render function
   }, (error) => {
     console.error("Error listening to entries:", error);
     alert("Error connecting to database. Check Firestore security rules.");
@@ -861,7 +861,7 @@ btnAdd.addEventListener("click", async () => {
   }
   
   btnAdd.disabled = false;
-  // No need to call refreshAll() here, onSnapshot will do it
+  // No need to call renderWithFilters() here, onSnapshot will do it
 });
 
 btnClear.addEventListener("click", clearForm);
@@ -1211,42 +1211,22 @@ function updateSummary(filteredList = null){
   }
 }
 
-/* Filters apply (Unchanged) */
-applyFilter.addEventListener("click", ()=> {
+/* MODIFIED: Filters apply */
+applyFilter.addEventListener("click", async () => {
   const mode = viewMode.value;
-  let y, m, yFrom, yTo;
-  
-  if (mode === 'yearly') {
-    yFrom = filterYearFrom.value;
-    yTo = filterYearTo.value;
-    y = null;
-    m = null;
+  if (mode === 'daily') {
+    const year = filterYear.value;
+    const month = filterMonth.value;
+    await applyRecurringEntriesForMonth(year, month);
+    // onSnapshot will call renderWithFilters if data changed.
+    // Call manually just in case it didn't (no new recurring entries).
+    renderWithFilters();
   } else {
-    y = filterYear.value;
-    m = mode === 'daily' ? filterMonth.value : null;
-    yFrom = null;
-    yTo = null;
+    renderWithFilters();
   }
-  
-  const cat = filterCategory.value.trim();
-  
-  let filtered = entries.slice();
-  if(y) filtered = filtered.filter(e => new Date(e.date).getFullYear() === +y);
-  if(m) filtered = filtered.filter(e => (new Date(e.date).getMonth()+1) === +m);
-  if(yFrom && yTo) {
-    filtered = filtered.filter(e => {
-      const year = new Date(e.date).getFullYear();
-      return year >= +yFrom && year <= +yTo;
-    });
-  }
-  if(cat) filtered = filtered.filter(e => e.category.toLowerCase().includes(cat.toLowerCase()));
-  
-  renderTable(filtered);
-  updateSummary(filtered);
-  renderCharts(mode, y, m, yFrom, yTo, cat);
 });
 
-/* Reset Filter (Unchanged) */
+/* MODIFIED: Reset Filter */
 resetFilter.addEventListener("click", ()=> {
   filterCategory.value = "";
   const now = new Date();
@@ -1254,10 +1234,8 @@ resetFilter.addEventListener("click", ()=> {
   filterMonth.value = now.getMonth() + 1;
   filterYearFrom.value = now.getFullYear() - 5;
   filterYearTo.value = now.getFullYear();
-  // refreshAll will be called by onSnapshot, but we can trigger a render manually
-  renderTable();
-  updateSummary();
-  renderCharts(viewMode.value, filterYear.value, filterMonth.value, filterYearFrom.value, filterYearTo.value, "");
+  // Manually run filters to reset view
+  renderWithFilters();
 });
 
 /* Export (Unchanged) / Import (Modified) */
@@ -1502,9 +1480,13 @@ viewMode.addEventListener("change", async ()=> {
     const year = filterYear.value;
     const month = filterMonth.value;
     await applyRecurringEntriesForMonth(year, month);
+    // onSnapshot will call renderWithFilters if data changed.
+    // Call manually just in case it didn't.
+    renderWithFilters();
+  } else {
+    // Re-render charts for new view
+    renderWithFilters();
   }
-  // Re-render charts for new view
-  refreshAllCharts();
 });
 
 /* (Modified) Apply filters - calls applyRecurring */
@@ -1516,17 +1498,14 @@ applyFilter.addEventListener("click", async ()=> {
     await applyRecurringEntriesForMonth(year, month);
   }
   // Manually trigger a filter/render.
-  // onSnapshot will catch the new recurring entries, but this
-  // applies the *other* filters (like category) immediately.
-  refreshAll();
+  renderWithFilters();
 });
 
-/* (Modified) Initial refresh */
-function refreshAll(){
-  // This function is now called by onSnapshot
-  // It just needs to re-render everything based on the global `entries` array
+/* (Modified) NEW function to apply all filters and render */
+function renderWithFilters(){
+  // This function is now called by onSnapshot, filters, etc.
+  // It reads all filters and renders table, summary, and charts.
   
-  // ensure recurring entries for current month on load
   if (!isFirebaseReady) {
     // If firebase isn't ready (i.e., logged out), just clear
     renderTable();
@@ -1535,17 +1514,40 @@ function refreshAll(){
     return;
   }
   
+  // 1. Get all filter values
   const mode = viewMode.value;
-  if (mode === 'daily') {
-    const year = filterYear.value;
-    const month = filterMonth.value;
-    // We call this, but don't await, onSnapshot will catch changes
-    applyRecurringEntriesForMonth(year, month);
+  let y, m, yFrom, yTo;
+  
+  if (mode === 'yearly') {
+    yFrom = filterYearFrom.value;
+    yTo = filterYearTo.value;
+    y = null;
+    m = null;
+  } else {
+    y = filterYear.value;
+    m = mode === 'daily' ? filterMonth.value : null;
+    yFrom = null;
+    yTo = null;
   }
+  
+  const cat = filterCategory.value.trim();
 
-  renderTable();
-  updateSummary();
-  refreshAllCharts();
+  // 2. Filter the global 'entries' array
+  let filtered = entries.slice();
+  if(y) filtered = filtered.filter(e => new Date(e.date).getFullYear() === +y);
+  if(m) filtered = filtered.filter(e => (new Date(e.date).getMonth()+1) === +m);
+  if(yFrom && yTo) {
+    filtered = filtered.filter(e => {
+      const year = new Date(e.date).getFullYear();
+      return year >= +yFrom && year <= +yTo;
+    });
+  }
+  if(cat) filtered = filtered.filter(e => e.category.toLowerCase().includes(cat.toLowerCase()));
+  
+  // 3. Render everything with the filtered list
+  renderTable(filtered);
+  updateSummary(filtered);
+  refreshAllCharts(); // This function reads filters internally
 }
 
 // Helper to just refresh charts
