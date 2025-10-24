@@ -1,0 +1,1576 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Expense Calculator — Firebase</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    /* small custom tweaks */
+    :root{
+      --card: #ffffff;
+      --muted: #6b7280;
+    }
+    [data-theme="dark"]{
+      --card: #0b1220;
+      --muted: #9ca3af;
+      background:#071024;
+    }
+    body{ 
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto; 
+      background: linear-gradient(180deg,#f8fafc, #ffffff);
+      transition: all 0.3s ease;
+    }
+    [data-theme="dark"] body { 
+      background: linear-gradient(180deg,#071024,#071427); 
+      color: #e6eef8; 
+    }
+    .card { 
+      background: var(--card); 
+      border-radius: 12px; 
+      box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+      transition: all 0.3s ease;
+    }
+    [data-theme="dark"] .card { 
+      box-shadow: 0 6px 20px rgba(2,6,23,0.6); 
+    }
+    .small-muted { color: var(--muted); font-size: 0.9rem; }
+    .btn { 
+      @apply px-4 py-2 rounded-lg shadow-sm text-white transition-all duration-300 ease-in-out transform hover:scale-105; 
+    }
+    .btn-prim { background: linear-gradient(90deg,#2563eb,#1e40af); }
+    .btn-danger { background: linear-gradient(90deg,#ef4444,#b91c1c); }
+    .btn-success { background: linear-gradient(90deg,#10b981,#059669); }
+    .table-scroll { max-height:280px; overflow:auto; }
+    .chart-wrap{ height: 320px; } /* fixed chart height to avoid long scrolling */
+    .fade { transition: all .25s ease; }
+    
+    /* Animation classes */
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    .slide-in {
+      animation: slideIn 0.3s ease-out;
+    }
+    .pulse-glow {
+      animation: pulseGlow 2s infinite;
+    }
+    
+    /* Keyframes */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(-10px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    @keyframes pulseGlow {
+      0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+    }
+    
+    /* small responsive tweaks */
+    @media (max-width:640px){
+      .chart-wrap { height: 260px; }
+    }
+    
+    /* Custom scrollbar */
+    .table-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+    .table-scroll::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    .table-scroll::-webkit-scrollbar-thumb {
+      background: #c5c5c5;
+      border-radius: 10px;
+    }
+    .table-scroll::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+    
+    [data-theme="dark"] .table-scroll::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    [data-theme="dark"] .table-scroll::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+    [data-theme="dark"] .table-scroll::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+    
+    /* Helper to hide elements */
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4" data-theme="light">
+
+  <!-- ============================
+       NEW: Auth Container
+       ============================ -->
+  <div id="auth-container" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="background: linear-gradient(180deg,#f8fafc, #ffffff);">
+    <div class="card w-full max-w-sm p-6">
+      <h1 class="text-2xl font-bold text-center mb-4">💰 Expense Calculator</h1>
+      <div id="auth-forms">
+        <!-- Login Form -->
+        <form id="login-form" class="grid grid-cols-1 gap-4">
+          <h2 class="font-semibold text-lg">Login</h2>
+          <div>
+            <label class="small-muted">Email</label>
+            <input id="login-email" type="email" placeholder="you@email.com" class="w-full p-2 rounded-lg border" required />
+          </div>
+          <div>
+            <label class="small-muted">Password</label>
+            <input id="login-password" type="password" placeholder="••••••••" class="w-full p-2 rounded-lg border" required />
+          </div>
+          <button type="submit" class="btn btn-prim w-full">Login</button>
+          <div id="login-error" class="text-red-500 text-sm hidden"></div>
+          <p class="small-muted text-center">
+            Don't have an account? 
+            <button type="button" id="show-signup" class="text-blue-500 hover:underline">Sign Up</button>
+          </p>
+        </form>
+        
+        <!-- Signup Form -->
+        <form id="signup-form" class="grid grid-cols-1 gap-4 hidden">
+          <h2 class="font-semibold text-lg">Create Account</h2>
+          <div>
+            <label class="small-muted">Email</label>
+            <input id="signup-email" type="email" placeholder="you@email.com" class="w-full p-2 rounded-lg border" required />
+          </div>
+          <div>
+            <label class="small-muted">Password (min. 6 characters)</label>
+            <input id="signup-password" type="password" placeholder="••••••••" class="w-full p-2 rounded-lg border" required />
+          </div>
+          <button type="submit" class="btn btn-prim w-full">Create Account</button>
+          <div id="signup-error" class="text-red-500 text-sm hidden"></div>
+          <p class="small-muted text-center">
+            Already have an account? 
+            <button type="button" id="show-login" class="text-blue-500 hover:underline">Login</button>
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================
+       MAIN APP CONTAINER (Hidden by default)
+       ============================ -->
+  <div id="app-container" class="max-w-6xl mx-auto hidden">
+    <header class="flex items-center justify-between mb-6 fade-in">
+      <div class="flex items-center gap-3">
+        <i class="fas fa-money-bill-wave text-3xl text-green-500"></i>
+        <h1 class="text-2xl font-bold">💰 Expense Calculator</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- User Email will be shown here -->
+        <div id="auth-status" class="small-muted text-xs">Connecting...</div>
+        <button id="btnSignOut" class="small-muted text-blue-500 hover:underline text-xs">Sign Out</button>
+        <label class="small-muted mr-2">Theme</label>
+        <button id="themeToggle" title="Toggle dark" class="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 transition-all duration-300">
+          <i class="fas fa-moon"></i> Dark
+        </button>
+      </div>
+    </header>
+
+    <!-- top grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <!-- Left: Form -->
+      <div class="card p-4 slide-in">
+        <h2 class="font-medium mb-3 flex items-center gap-2">
+          <i class="fas fa-plus-circle text-blue-500"></i> Add / Edit Entry
+        </h2>
+
+        <div class="grid grid-cols-1 gap-3">
+          <div>
+            <label class="small-muted flex items-center gap-1">
+              <i class="fas fa-calendar-alt"></i> Date
+            </label>
+            <input id="inpDate" type="date" class="w-full p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300" />
+          </div>
+
+          <div>
+            <label class="small-muted flex items-center gap-1">
+              <i class="fas fa-exchange-alt"></i> Type
+            </label>
+            <select id="inpType" class="w-full p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300">
+              <option value="expense">Expense</option>
+              <option value="earning">Earning</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="small-muted flex items-center gap-1">
+              <i class="fas fa-tags"></i> Category
+            </label>
+            <input id="inpCategory" type="text" placeholder="e.g. Food, Rent, Salary" class="w-full p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300" />
+          </div>
+
+          <div>
+            <label class="small-muted flex items-center gap-1">
+              <i class="fas fa-rupee-sign"></i> Amount (₹)
+            </label>
+            <input id="inpAmount" type="number" step="0.01" placeholder="100.00" class="w-full p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300" />
+          </div>
+
+          <div>
+            <label class="small-muted flex items-center gap-1">
+              <i class="fas fa-sticky-note"></i> Note (optional)
+            </label>
+            <textarea id="inpNote" rows="2" placeholder="Short note..." class="w-full p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300"></textarea>
+          </div>
+
+          <div class="flex items-center gap-2 p-2 rounded-lg bg-blue-50">
+            <input id="inpRecurring" type="checkbox" class="rounded focus:ring-blue-300" />
+            <label class="small-muted flex items-center gap-1">
+              <i class="fas fa-redo-alt"></i> Make this a recurring monthly entry
+            </label>
+          </div>
+
+          <div class="flex gap-2 mt-2">
+            <button id="btnAdd" class="btn btn-prim flex items-center gap-2 pulse-glow" disabled>
+              <i class="fas fa-plus"></i> Add Entry
+            </button>
+            <button id="btnClear" class="px-4 py-2 rounded-lg border flex items-center gap-2 transition-all duration-300 hover:bg-gray-100">
+              <i class="fas fa-eraser"></i> Clear
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Middle: Summary -->
+      <div class="card p-4 flex flex-col justify-between slide-in">
+        <div>
+          <h2 class="font-medium mb-3 flex items-center gap-2">
+            <i class="fas fa-chart-bar text-green-500"></i> Summary
+          </h2>
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="p-3 rounded-lg bg-green-50 transition-all duration-300 hover:shadow-md">
+              <div class="small-muted flex items-center gap-1">
+                <i class="fas fa-arrow-up text-green-500"></i> Earned
+              </div>
+              <div id="sumEarned" class="text-lg font-semibold text-green-600">₹0</div>
+            </div>
+            <div class="p-3 rounded-lg bg-red-50 transition-all duration-300 hover:shadow-md">
+              <div class="small-muted flex items-center gap-1">
+                <i class="fas fa-arrow-down text-red-500"></i> Spent
+              </div>
+              <div id="sumSpent" class="text-lg font-semibold text-red-600">₹0</div>
+            </div>
+            <div id="netCard" class="p-3 rounded-lg bg-gray-100 transition-all duration-300 hover:shadow-md">
+              <div class="small-muted flex items-center gap-1">
+                <i class="fas fa-balance-scale"></i> Net
+              </div>
+              <div id="sumNet" class="text-lg font-semibold">₹0</div>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="small-muted flex items-center gap-1 mb-1">
+              <i class="fas fa-bullseye"></i> Monthly Budget (₹)
+            </label>
+            <input id="budgetInput" type="number" step="0.01" placeholder="Set a monthly budget" class="w-full p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300" />
+            <div id="budgetAlert" class="mt-2 hidden p-2 rounded-lg text-sm"></div>
+          </div>
+
+          <div class="mt-3 small-muted bg-blue-50 p-3 rounded-lg">
+            <strong class="flex items-center gap-1">
+              <i class="fas fa-lightbulb text-yellow-500"></i> Quick tips:
+            </strong> 
+            Add a recurring rent entry once and it will appear every month automatically. Enable daily reminders to get a 10:00 PM prompt (browser must be open).
+          </div>
+        </div>
+
+        <div class="mt-4 flex gap-2">
+          <button id="exportBtn" class="btn btn-success flex items-center gap-2">
+            <i class="fas fa-file-export"></i> Export CSV
+          </button>
+          <input id="importFile" type="file" accept=".csv" class="hidden" />
+          <button id="importBtn" class="px-4 py-2 rounded-lg border flex items-center gap-2 transition-all duration-300 hover:bg-gray-100">
+            <i class="fas fa-file-import"></i> Import CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Right: Controls & Filters -->
+      <div class="card p-4 slide-in">
+        <h2 class="font-medium mb-3 flex items-center gap-2">
+          <i class="fas fa-filter text-purple-500"></i> Filters & Views
+        </h2>
+
+        <div class="mb-3">
+          <label class="small-muted flex items-center gap-1">
+            <i class="fas fa-eye"></i> View
+          </label>
+          <select id="viewMode" class="w-full p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300">
+            <option value="daily">Daily (days of month)</option>
+            <option value="monthly">Monthly (Jan..Dec)</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+
+        <div id="yearRangeContainer" class="hidden mb-3">
+          <label class="small-muted flex items-center gap-1">
+            <i class="fas fa-calendar"></i> Year Range
+          </label>
+          <div class="flex gap-2">
+            <select id="filterYearFrom" class="w-1/2 p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300"></select>
+            <select id="filterYearTo" class="w-1/2 p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300"></select>
+          </div>
+        </div>
+
+        <div id="singleYearContainer" class="mb-3">
+          <label class="small-muted flex items-center gap-1">
+            <i class="fas fa-calendar"></i> Select Year
+          </label>
+          <select id="filterYear" class="w-full p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300"></select>
+        </div>
+
+        <div id="monthContainer" class="mb-3">
+          <label class="small-muted flex items-center gap-1">
+            <i class="fas fa-calendar-day"></i> Select Month (for daily view)
+          </label>
+          <select id="filterMonth" class="w-full p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300"></select>
+        </div>
+
+        <div class="mb-3">
+          <label class="small-muted flex items-center gap-1">
+            <i class="fas fa-tags"></i> Category Filter
+          </label>
+          <input id="filterCategory" type="text" placeholder="Type to filter categories" class="w-full p-2 rounded-lg border transition-all duration-300 focus:ring-2 focus:ring-blue-300" />
+        </div>
+
+        <div class="flex gap-2 mb-4">
+          <button id="applyFilter" class="btn btn-prim flex items-center gap-2">
+            <i class="fas fa-check"></i> Apply
+          </button>
+          <button id="resetFilter" class="px-4 py-2 rounded-lg border flex items-center gap-2 transition-all duration-300 hover:bg-gray-100">
+            <i class="fas fa-redo"></i> Reset
+          </button>
+        </div>
+
+        <hr class="my-3" />
+
+        <div class="mb-3">
+          <label class="small-muted flex items-center gap-1">
+            <i class="fas fa-bell"></i> Daily Reminder
+          </label>
+          <div class="flex gap-2 items-center">
+            <input id="reminderToggle" type="checkbox" class="rounded focus:ring-blue-300" />
+            <span class="small-muted">Enable nightly reminder at 10:00 PM (requires notifications permission)</span>
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="small-muted flex items-center gap-1">
+            <i class="fas fa-palette"></i> Dark mode
+          </label>
+          <div class="flex gap-2 items-center">
+            <input id="darkToggle" type="checkbox" class="rounded focus:ring-blue-300" />
+            <span class="small-muted">Enable dark UI</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card p-4 mb-6 fade-in">
+      <h3 class="font-medium mb-3 flex items-center gap-2">
+        <i class="fas fa-table text-blue-500"></i> Entries
+      </h3>
+      <div class="table-scroll">
+        <table class="w-full text-left">
+          <thead class="bg-slate-50 sticky top-0">
+            <tr>
+              <th class="p-3">Date</th>
+              <th class="p-3">Type</th>
+              <th class="p-3">Category</th>
+              <th class="p-3">Amount</th>
+              <th class="p-3">Note</th>
+              <th class="p-3">Recurring?</th>
+              <th class="p-3">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="entriesTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts: bar + pie -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="card p-4 fade-in">
+        <h3 class="font-medium mb-3 flex items-center gap-2">
+          <i class="fas fa-chart-line text-blue-500"></i> Income vs Expense
+        </h3>
+        <div class="chart-wrap">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card p-4 fade-in">
+        <h3 class="font-medium mb-3 flex items-center gap-2">
+          <i class="fas fa-chart-pie text-purple-500"></i> Category Breakdown
+        </h3>
+        <div class="chart-wrap">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <footer class="text-center small-muted mt-8 fade-in">
+      <div class="flex items-center justify-center gap-2">
+        <i class="fas fa-calculator"></i>
+        Expense Calculator • Data stored in Firebase
+      </div>
+    </footer>
+  </div>
+
+<script type="module">
+/* ============================
+   Firebase Integration
+   ============================ */
+
+// Import Firebase SDKs
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { 
+  getAuth, 
+  onAuthStateChanged,
+  createUserWithEmailAndPassword, // NEW
+  signInWithEmailAndPassword,     // NEW
+  signOut                         // NEW
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { 
+  getFirestore, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  addDoc, 
+  deleteDoc, 
+  collection, 
+  onSnapshot,
+  setLogLevel
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+
+// --- FIXED: Hardcoded Firebase configuration from your selection ---
+const firebaseConfig = {
+  apiKey: "AIzaSyBSE8QWjz_4Cf5Vlm7CIz1uCjFnF2qtpYk",
+  authDomain: "expensecalculator-59d9f.firebaseapp.com",
+  databaseURL: "https://expensecalculator-59d9f-default-rtdb.firebaseio.com",
+  projectId: "expensecalculator-59d9f",
+  storageBucket: "expensecalculator-59d9f.firebasestorage.app",
+  messagingSenderId: "784723201241",
+  appId: "1:784723201241:web:c29a9cb222e1a9663d82c8",
+  measurementId: "G-NG0MG3DJBN"
+};
+
+// --- Global Firebase & App Variables ---
+let app, auth, db;
+let userId;
+let entries = []; // This will be populated by Firestore
+let settings = {}; // This will be populated by Firestore
+let isFirebaseReady = false;
+let entriesUnsubscribe = null; // To stop the listener
+
+// --- FIXED: Simplified Firebase Collection/Document References for local use ---
+const getEntriesCollection = () => collection(db, `users/${userId}/entries`);
+const getEntryDoc = (id) => doc(db, `users/${userId}/entries/${id}`);
+const getSettingsDoc = () => doc(db, `users/${userId}/settings/userSettings`);
+
+
+/* ============================
+   Core app: Firebase driven
+   ============================ */
+
+/* Utility */
+const $ = id => document.getElementById(id);
+const todayISO = () => new Date().toISOString().slice(0,10);
+
+/* DOM elements */
+// App elements
+const appContainer = $("app-container");
+const inpDate = $("inpDate"), inpType = $("inpType"), inpCategory = $("inpCategory"),
+      inpAmount = $("inpAmount"), inpNote = $("inpNote"), inpRecurring = $("inpRecurring"),
+      btnAdd = $("btnAdd"), btnClear = $("btnClear"),
+      sumEarned = $("sumEarned"), sumSpent = $("sumSpent"), sumNet = $("sumNet"),
+      netCard = $("netCard"), budgetInput = $("budgetInput"), budgetAlert = $("budgetAlert"),
+      exportBtn = $("exportBtn"), importBtn = $("importBtn"), importFile = $("importFile"),
+      viewMode = $("viewMode"), filterYear = $("filterYear"), filterMonth = $("filterMonth"),
+      filterCategory = $("filterCategory"), applyFilter = $("applyFilter"), resetFilter = $("resetFilter"),
+      reminderToggle = $("reminderToggle"), darkToggle = $("darkToggle"),
+      themeToggle = $("themeToggle"),
+      yearRangeContainer = $("yearRangeContainer"), singleYearContainer = $("singleYearContainer"),
+      monthContainer = $("monthContainer"), filterYearFrom = $("filterYearFrom"), filterYearTo = $("filterYearTo"),
+      authStatus = $("auth-status"),
+      btnSignOut = $("btnSignOut");
+
+// Auth elements
+const authContainer = $("auth-container");
+const loginForm = $("login-form"), signupForm = $("signup-form");
+const loginEmail = $("login-email"), loginPassword = $("login-password"), loginError = $("login-error");
+const signupEmail = $("signup-email"), signupPassword = $("signup-password"), signupError = $("signup-error");
+const showSignup = $("show-signup"), showLogin = $("show-login");
+
+
+let barChart, pieChart;
+
+/* Initialize UI defaults */
+function initUI(){
+  inpDate.value = todayISO();
+
+  // Populate years: last 10 years to 2050
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  
+  // For single year select
+  filterYear.innerHTML = '';
+  for(let y = currentYear - 10; y <= 2050; y++){
+    const opt = document.createElement("option"); 
+    opt.value = y; 
+    opt.textContent = y;
+    if(y === currentYear) opt.selected = true;
+    filterYear.appendChild(opt);
+  }
+  
+  // For year range selects
+  filterYearFrom.innerHTML = '';
+  filterYearTo.innerHTML = '';
+  for(let y = currentYear - 10; y <= 2050; y++){
+    const optFrom = document.createElement("option"); 
+    optFrom.value = y; 
+    optFrom.textContent = y;
+    
+    const optTo = document.createElement("option"); 
+    optTo.value = y; 
+    optTo.textContent = y;
+    
+    if(y === currentYear - 5) optFrom.selected = true;
+    if(y === currentYear) optTo.selected = true;
+    
+    filterYearFrom.appendChild(optFrom);
+    filterYearTo.appendChild(optTo);
+  }
+  
+  // months 1-12
+  filterMonth.innerHTML = '';
+  for(let m = 1; m <= 12; m++){
+    const opt = document.createElement("option"); 
+    opt.value = m; 
+    opt.textContent = new Date(2000, m-1).toLocaleString('default', { month: 'long' });
+    const currentMonth = now.getMonth() + 1;
+    if(m === currentMonth) opt.selected = true;
+    filterMonth.appendChild(opt);
+  }
+
+  // load settings
+  if(settings.budget) budgetInput.value = settings.budget;
+  if(settings.reminderEnabled) reminderToggle.checked = true;
+  if(settings.darkMode) {
+    darkToggle.checked = true;
+  }
+
+  // theme toggle quick button
+  themeToggle.addEventListener("click", ()=> {
+    darkToggle.checked = !darkToggle.checked;
+    applyTheme();
+  });
+
+  // Update filter UI based on view mode
+  updateFilterUI();
+  
+  viewMode.addEventListener("change", updateFilterUI);
+  
+  applyTheme();
+}
+
+// Update filter UI based on selected view mode
+function updateFilterUI() {
+  const mode = viewMode.value;
+  
+  if (mode === 'yearly') {
+    yearRangeContainer.classList.remove('hidden');
+    singleYearContainer.classList.add('hidden');
+    monthContainer.classList.add('hidden');
+  } else if (mode === 'monthly') {
+    yearRangeContainer.classList.add('hidden');
+    singleYearContainer.classList.remove('hidden');
+    monthContainer.classList.add('hidden');
+  } else { // daily
+    yearRangeContainer.classList.add('hidden');
+    singleYearContainer.classList.remove('hidden');
+    monthContainer.classList.remove('hidden');
+  }
+}
+
+/* ============================
+   NEW FIREBASE FUNCTIONS
+   ============================ */
+
+async function initFirebase() {
+  if (!firebaseConfig.apiKey) {
+    authStatus.textContent = "Firebase config missing. App disabled.";
+    console.error("Firebase config is missing.");
+    return;
+  }
+  
+  try {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    setLogLevel('debug'); // Enable Firestore logging
+
+    // --- CENTRAL AUTH LOGIC ---
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // --- USER IS LOGGED IN ---
+        userId = user.uid;
+        isFirebaseReady = true;
+        authStatus.textContent = user.email; // Show user email
+        btnAdd.disabled = false; // Enable form
+
+        // Show app, hide auth
+        appContainer.classList.remove('hidden');
+        authContainer.classList.add('hidden');
+        btnSignOut.classList.remove('hidden');
+
+        // 1. Load settings first
+        await loadSettings();
+        
+        // 2. Initialize UI (depends on settings)
+        initUI(); // This will now run and populate the years
+
+        // 3. Start listening for entries
+        listenForEntries();
+
+        // 4. Start reminders (depends on settings)
+        if(settings.reminderEnabled){
+          scheduleReminderTick();
+        }
+      } else {
+        // --- USER IS LOGGED OUT ---
+        userId = null;
+        isFirebaseReady = false;
+        
+        // Hide app, show auth
+        appContainer.classList.add('hidden');
+        authContainer.classList.remove('hidden');
+        btnSignOut.classList.add('hidden');
+        authStatus.textContent = "Please sign in";
+        
+        // Stop listening to old data
+        if (entriesUnsubscribe) entriesUnsubscribe();
+        
+        // Clear local data
+        entries = [];
+        settings = {};
+        refreshAll(); // Clear charts/tables
+      }
+    });
+
+  } catch (e) {
+    console.error("Error initializing Firebase:", e);
+    authStatus.textContent = "Firebase Init Error.";
+  }
+}
+
+// --- NEW Auth Event Listeners ---
+showSignup.addEventListener("click", () => {
+  loginForm.classList.add("hidden");
+  signupForm.classList.remove("hidden");
+  loginError.classList.add("hidden");
+});
+
+showLogin.addEventListener("click", () => {
+  loginForm.classList.remove("hidden");
+  signupForm.classList.add("hidden");
+  signupError.classList.add("hidden");
+});
+
+loginForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  loginError.classList.add("hidden");
+  try {
+    await signInWithEmailAndPassword(auth, loginEmail.value, loginPassword.value);
+    // onAuthStateChanged will handle the rest
+  } catch (error) {
+    console.error("Login error:", error.code);
+    loginError.textContent = getAuthErrorMessage(error.code);
+    loginError.classList.remove("hidden");
+  }
+});
+
+signupForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  signupError.classList.add("hidden");
+  try {
+    await createUserWithEmailAndPassword(auth, signupEmail.value, signupPassword.value);
+    // onAuthStateChanged will handle the rest
+  } catch (error) {
+    console.error("Sign up error:", error.code);
+    signupError.textContent = getAuthErrorMessage(error.code);
+    signupError.classList.remove("hidden");
+  }
+});
+
+btnSignOut.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+    // onAuthStateChanged will handle hiding the app
+  } catch (error) {
+    console.error("Sign out error:", error);
+    alert("Error signing out.");
+  }
+});
+
+function getAuthErrorMessage(code) {
+  switch (code) {
+    case "auth/wrong-password":
+      return "Incorrect password. Please try again.";
+    case "auth/user-not-found":
+      return "No account found with this email.";
+    case "auth/invalid-email":
+      return "Please enter a valid email address.";
+    case "auth/email-already-in-use":
+      return "This email is already registered. Please login.";
+    case "auth/weak-password":
+      return "Password must be at least 6 characters long.";
+    default:
+      return "An unknown error occurred. Please try again.";
+  }
+}
+
+
+// (Replaced localStorage.saveSettings)
+async function saveSettings(){ 
+  if (!isFirebaseReady) return;
+  try {
+    await setDoc(getSettingsDoc(), settings);
+    console.log("Settings saved to Firebase");
+  } catch (e) {
+    console.error("Error saving settings:", e);
+  }
+}
+
+// (New) Load settings from Firebase
+async function loadSettings() {
+  if (!isFirebaseReady) return;
+  try {
+    const docSnap = await getDoc(getSettingsDoc());
+    if (docSnap.exists()) {
+      settings = docSnap.data();
+      console.log("Settings loaded from Firebase");
+    } else {
+      // No settings doc, use defaults
+      console.log("No settings doc found, using defaults.");
+      settings = {budget:null, reminderEnabled:false, darkMode:false, lastReminderDate:null};
+    }
+  } catch (e) {
+    console.error("Error loading settings:", e);
+    settings = {budget:null, reminderEnabled:false, darkMode:false, lastReminderDate:null};
+  }
+  // Apply defaults for any missing keys
+  settings = {...{budget:null, reminderEnabled:false, darkMode:false, lastReminderDate:null}, ...settings};
+  lastReminderDate = settings.lastReminderDate || null;
+}
+
+// (New) Listen for real-time entry changes
+function listenForEntries() {
+  if (!isFirebaseReady) return;
+
+  // Stop any previous listener
+  if (entriesUnsubscribe) entriesUnsubscribe();
+
+  entriesUnsubscribe = onSnapshot(getEntriesCollection(), (snapshot) => {
+    console.log("Firestore snapshot received, processing...");
+    entries = [];
+    snapshot.forEach((doc) => {
+      entries.push({ id: doc.id, ...doc.data() });
+    });
+    console.log(`Loaded ${entries.length} entries.`);
+    
+    // CRITICAL: Refresh the entire UI whenever data changes
+    refreshAll();
+  }, (error) => {
+    console.error("Error listening to entries:", error);
+    alert("Error connecting to database. Check Firestore security rules.");
+  });
+}
+
+
+/* ============================
+   MODIFIED CORE LOGIC
+   ============================ */
+
+let editingId = null;
+// (Modified) Add/Edit logic
+btnAdd.addEventListener("click", async () => {
+  if (!isFirebaseReady) {
+    alert("Please wait, connecting to database...");
+    return;
+  }
+
+  // basic validation (unchanged)
+  const date = inpDate.value;
+  const category = inpCategory.value.trim();
+  const amount = parseFloat(inpAmount.value);
+  const type = inpType.value;
+  const note = inpNote.value.trim();
+  const recurring = inpRecurring.checked;
+
+  if(!date || !category || Number.isNaN(amount)){
+    alert("Please fill date, category and amount correctly.");
+    return;
+  }
+  
+  const entryData = { date, category, amount: +amount, type, note, recurring: !!recurring };
+
+  // Disable button during operation
+  btnAdd.disabled = true;
+  
+  try {
+    if(editingId){
+      // Update existing doc
+      const docRef = getEntryDoc(editingId);
+      await setDoc(docRef, entryData);
+      console.log("Entry updated:", editingId);
+      editingId = null;
+      btnAdd.innerHTML = '<i class="fas fa-plus"></i> Add Entry';
+    } else {
+      // Add new doc
+      const docRef = await addDoc(getEntriesCollection(), entryData);
+      console.log("Entry added with ID:", docRef.id);
+    }
+    clearForm();
+  } catch (e) {
+    console.error("Error adding/updating entry:", e);
+    alert("Could not save entry. Please try again.");
+  }
+  
+  btnAdd.disabled = false;
+  // No need to call refreshAll() here, onSnapshot will do it
+});
+
+btnClear.addEventListener("click", clearForm);
+function clearForm(){
+  inpDate.value = todayISO();
+  inpType.value = "expense";
+  inpCategory.value = "";
+  inpAmount.value = "";
+  inpNote.value = "";
+  inpRecurring.checked = false;
+  editingId = null;
+  btnAdd.innerHTML = '<i class="fas fa-plus"></i> Add Entry';
+}
+
+/* Render entries table (Unchanged logic, but now uses 'id' from firestore) */
+function renderTable(filtered = null){
+  const tbody = $("entriesTbody");
+  tbody.innerHTML = "";
+  const list = filtered || entries.slice().sort((a,b)=> b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+
+  if(list.length === 0){
+    tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center small-muted">No entries yet. Add your first entry above!</td></tr>`;
+    return;
+  }
+
+  for(const e of list){
+    const tr = document.createElement("tr");
+    tr.className = "border-b transition-all duration-300 hover:bg-gray-50";
+    // NOTE: We must wrap the 'id' in quotes for the onclick handler
+    tr.innerHTML = `
+      <td class="p-3">${e.date}</td>
+      <td class="p-3">
+        <span class="px-2 py-1 rounded-full text-xs ${e.type === 'earning' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+          ${e.type === 'earning' ? 'Earning' : 'Expense'}
+        </span>
+      </td>
+      <td class="p-3">${escapeHtml(e.category)}</td>
+      <td class="p-3 font-medium">₹${Number(e.amount).toFixed(2)}</td>
+      <td class="p-3">${escapeHtml(e.note || "")}</td>
+      <td class="p-3 text-center">${e.recurring ? '<i class="fas fa-redo text-blue-500"></i>' : '—'}</td>
+      <td class="p-3">
+        <button class="text-blue-600 mr-2 transition-all duration-300 hover:text-blue-800" onclick="startEdit('${e.id}')">
+          <i class="fas fa-edit"></i> Edit
+        </button>
+        <button class="text-red-600 transition-all duration-300 hover:text-red-800" onclick="deleteEntry('${e.id}')">
+          <i class="fas fa-trash"></i> Delete
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  }
+}
+// Make functions globally accessible for onclick handlers
+window.startEdit = startEdit;
+window.deleteEntry = deleteEntry;
+
+/* (Modified) Edit / delete */
+function startEdit(id){
+  const entry = entries.find(e=> e.id === id);
+  if(!entry) return;
+  editingId = id;
+  inpDate.value = entry.date;
+  inpType.value = entry.type;
+  inpCategory.value = entry.category;
+  inpAmount.value = entry.amount;
+  inpNote.value = entry.note;
+  inpRecurring.checked = !!entry.recurring;
+  btnAdd.innerHTML = '<i class="fas fa-save"></i> Update Entry';
+  
+  // Scroll to form
+  document.querySelector('.card.p-4').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function deleteEntry(id){
+  if(!confirm("Delete this entry?")) return;
+  
+  if (!isFirebaseReady) {
+    alert("Please wait, connecting to database...");
+    return;
+  }
+  
+  try {
+    await deleteDoc(getEntryDoc(id));
+    console.log("Entry deleted:", id);
+    // onSnapshot will handle the UI refresh
+  } catch (e) {
+    console.error("Error deleting entry:", e);
+    alert("Could not delete entry. Please try again.");
+  }
+}
+
+/* Aggregations & charts (Unchanged) */
+function aggregateForView(mode, yearSelected, monthSelected, yearFrom, yearTo, catFilter){
+  let filtered = entries.slice();
+  if(catFilter) filtered = filtered.filter(e => e.category.toLowerCase().includes(catFilter.toLowerCase()));
+
+  if(mode === 'daily'){
+    const y = +yearSelected;
+    const m = +monthSelected;
+    filtered = filtered.filter(e => {
+      const d = new Date(e.date);
+      return d.getFullYear() === y && (d.getMonth()+1) === m;
+    });
+    if(filtered.length === 0){
+      const daysInMonth = new Date(yearSelected, monthSelected, 0).getDate();
+      const labels = Array.from({length:daysInMonth}, (_,i)=> String(i+1).padStart(2,'0'));
+      return { labels, earned: new Array(labels.length).fill(0), spent: new Array(labels.length).fill(0), categoryMap: buildCategoryMap(filtered), filteredList: filtered };
+    }
+    const daysInMonth = new Date(yearSelected, monthSelected, 0).getDate();
+    const labels = Array.from({length:daysInMonth}, (_,i)=> String(i+1).padStart(2,'0'));
+    const earned = new Array(labels.length).fill(0);
+    const spent = new Array(labels.length).fill(0);
+    for(const e of filtered){
+      const d = new Date(e.date);
+      const idx = d.getDate() - 1;
+      if(e.type === 'earning') earned[idx] += +e.amount;
+      else spent[idx] += +e.amount;
+    }
+    return { labels, earned, spent, categoryMap: buildCategoryMap(filtered), filteredList: filtered };
+  }
+
+  if(mode === 'monthly'){
+    const y = +yearSelected;
+    const labels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const earned = new Array(12).fill(0);
+    const spent = new Array(12).fill(0);
+    const filteredYear = filtered.filter(e => new Date(e.date).getFullYear() === y);
+    for(const e of filteredYear){
+      const d = new Date(e.date);
+      const idx = d.getMonth();
+      if(e.type === 'earning') earned[idx] += +e.amount;
+      else spent[idx] += +e.amount;
+    }
+    return { labels, earned, spent, categoryMap: buildCategoryMap(filteredYear), filteredList: filteredYear };
+  }
+
+  if(mode === 'yearly'){
+    const from = +yearFrom;
+    const to = +yearTo;
+    const labels = [];
+    for (let y = from; y <= to; y++) {
+      labels.push(String(y));
+    }
+    const earned = new Array(labels.length).fill(0);
+    const spent = new Array(labels.length).fill(0);
+    const filteredYears = filtered.filter(e => {
+      const y = new Date(e.date).getFullYear();
+      return y >= from && y <= to;
+    });
+    for(const e of filteredYears){
+      const y = new Date(e.date).getFullYear();
+      const idx = labels.indexOf(String(y));
+      if(idx>=0){
+        if(e.type === 'earning') earned[idx] += +e.amount;
+        else spent[idx] += +e.amount;
+      }
+    }
+    return { labels, earned, spent, categoryMap: buildCategoryMap(filteredYears), filteredList: filteredYears };
+  }
+}
+
+/* Build category map for pie (Unchanged) */
+function buildCategoryMap(list){
+  const map = {};
+  for(const e of list){
+    if(!map[e.category]) map[e.category] = 0;
+    if(e.type === 'expense') map[e.category] += +e.amount;
+  }
+  return map;
+}
+
+/* Render charts (Unchanged) */
+function renderCharts(mode = viewMode.value, yearSel = filterYear.value, monthSel = filterMonth.value, yearFrom = filterYearFrom.value, yearTo = filterYearTo.value, catFilter = filterCategory.value){
+  const agg = aggregateForView(mode, yearSel, monthSel, yearFrom, yearTo, catFilter);
+
+  // BAR chart
+  const barCtx = document.getElementById("barChart");
+  if(barChart) barChart.destroy();
+  barChart = new Chart(barCtx, {
+    type: 'bar',
+    data: {
+      labels: agg.labels,
+      datasets: [
+        { 
+          label:'Earned (₹)', 
+          data: agg.earned, 
+          backgroundColor:'rgba(34,197,94,0.75)',
+          borderColor: 'rgba(34,197,94,1)',
+          borderWidth: 1
+        },
+        { 
+          label:'Spent (₹)', 
+          data: agg.spent, 
+          backgroundColor:'rgba(239,68,68,0.75)',
+          borderColor: 'rgba(239,68,68,1)',
+          borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true, 
+      maintainAspectRatio: false,
+      plugins:{ 
+        tooltip:{ mode:'index', intersect:false }, 
+        legend:{ position:'top' } 
+      },
+      scales:{ 
+        y:{ 
+          beginAtZero:true,
+          ticks: {
+            callback: function(value) {
+              return '₹' + value;
+            }
+          }
+        }, 
+        x:{ 
+          ticks:{ maxRotation:45, minRotation:0 } 
+        } 
+      },
+      animation: {
+        duration: 1000,
+        easing: 'easeOutQuart'
+      }
+    }
+  });
+
+  // PIE chart
+  const pieCtx = document.getElementById("pieChart");
+  if(pieChart) pieChart.destroy();
+  const list = agg.filteredList;
+  const catMap = {};
+  for(const e of list){
+    if(e.type !== 'expense') continue;
+    if(!catMap[e.category]) catMap[e.category] = 0;
+    catMap[e.category] += +e.amount;
+  }
+  if (Object.keys(catMap).length === 0) {
+    pieChart = new Chart(pieCtx, {
+      type:'doughnut',
+      data:{ 
+        labels:['No expenses in this period'], 
+        datasets:[{ 
+          data:[1], 
+          backgroundColor:['#e5e7eb'] 
+        }]
+      },
+      options:{ 
+        responsive:true, 
+        maintainAspectRatio:false, 
+        plugins:{
+          legend:{display:false},
+          tooltip: {enabled: false}
+        },
+        cutout: '60%'
+      }
+    });
+    return;
+  }
+  const categories = Object.keys(catMap).sort((a,b)=>catMap[b]-catMap[a]);
+  const top = categories.slice(0,8);
+  const topVals = top.map(k => catMap[k]);
+  const otherSum = categories.slice(8).reduce((s,k)=> s + catMap[k], 0);
+  const labels = [...top];
+  const data = [...topVals];
+  if(otherSum > 0){ labels.push('Other'); data.push(otherSum); }
+  const colors = [
+    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+    '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+  ];
+  while (colors.length < labels.length) {
+    colors.push(`hsl(${(colors.length * 45) % 360}, 70%, 60%)`);
+  }
+  pieChart = new Chart(pieCtx, {
+    type:'doughnut',
+    data:{ 
+      labels, 
+      datasets:[{ 
+        data, 
+        backgroundColor: colors.slice(0, labels.length),
+        borderWidth: 1,
+        borderColor: '#fff'
+      }]
+    },
+    options:{ 
+      responsive:true, 
+      maintainAspectRatio:false, 
+      plugins:{
+        legend:{
+          position:'right',
+          labels: {
+            usePointStyle: true,
+            padding: 15
+          }
+        }
+      },
+      cutout: '60%',
+      animation: {
+        animateScale: true,
+        animateRotate: true
+      }
+    }
+  });
+}
+
+/* Summary & budget alert (Unchanged) */
+function updateSummary(filteredList = null){
+  const list = filteredList || entries;
+  const totalEarned = list.filter(e=> e.type === 'earning').reduce((s,e)=> s+ (+e.amount), 0);
+  const totalSpent = list.filter(e=> e.type === 'expense').reduce((s,e)=> s+ (+e.amount), 0);
+  const net = totalEarned - totalSpent;
+  sumEarned.textContent = `₹${totalEarned.toFixed(2)}`;
+  sumSpent.textContent = `₹${totalSpent.toFixed(2)}`;
+  sumNet.textContent = `₹${net.toFixed(2)}`;
+
+  if(net > 0){
+    netCard.className = "p-3 rounded-lg bg-emerald-50 transition-all duration-300 hover:shadow-md";
+    sumNet.className = "text-lg font-semibold text-emerald-600";
+  } else if(net < 0){
+    netCard.className = "p-3 rounded-lg bg-red-50 transition-all duration-300 hover:shadow-md";
+    sumNet.className = "text-lg font-semibold text-red-600";
+  } else {
+    netCard.className = "p-3 rounded-lg bg-gray-100 transition-all duration-300 hover:shadow-md";
+    sumNet.className = "text-lg font-semibold";
+  }
+
+  if(settings.budget){
+    const b = +settings.budget;
+    const month = (filterMonth.value && filterMonth.value !== 'null') ? +filterMonth.value : (new Date().getMonth()+1);
+    const year = (filterYear.value && filterYear.value !== 'null') ? +filterYear.value : new Date().getFullYear();
+    const spentThisMonth = entries.filter(e=>{
+      const d = new Date(e.date);
+      return e.type === 'expense' && d.getFullYear() === year && (d.getMonth()+1) === month;
+    }).reduce((s,e)=> s + (+e.amount), 0);
+    
+    if(spentThisMonth > b){
+      budgetAlert.className = "mt-2 p-3 rounded-lg text-white bg-red-600 flex items-center gap-2";
+      budgetAlert.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Alert: You exceeded your monthly budget (₹${b.toFixed(2)}). Spent: ₹${spentThisMonth.toFixed(2)}.`;
+      budgetAlert.classList.remove("hidden");
+    } else if (spentThisMonth > b * 0.8) {
+      budgetAlert.className = "mt-2 p-3 rounded-lg text-black bg-yellow-200 flex items-center gap-2";
+      budgetAlert.innerHTML = `<i class="fas fa-exclamation-circle"></i> Warning: You've used ${((spentThisMonth/b)*100).toFixed(0)}% of your budget.`;
+      budgetAlert.classList.remove("hidden");
+    } else {
+      budgetAlert.classList.add("hidden");
+    }
+  } else {
+    budgetAlert.classList.add("hidden");
+  }
+}
+
+/* Filters apply (Unchanged) */
+applyFilter.addEventListener("click", ()=> {
+  const mode = viewMode.value;
+  let y, m, yFrom, yTo;
+  
+  if (mode === 'yearly') {
+    yFrom = filterYearFrom.value;
+    yTo = filterYearTo.value;
+    y = null;
+    m = null;
+  } else {
+    y = filterYear.value;
+    m = mode === 'daily' ? filterMonth.value : null;
+    yFrom = null;
+    yTo = null;
+  }
+  
+  const cat = filterCategory.value.trim();
+  
+  let filtered = entries.slice();
+  if(y) filtered = filtered.filter(e => new Date(e.date).getFullYear() === +y);
+  if(m) filtered = filtered.filter(e => (new Date(e.date).getMonth()+1) === +m);
+  if(yFrom && yTo) {
+    filtered = filtered.filter(e => {
+      const year = new Date(e.date).getFullYear();
+      return year >= +yFrom && year <= +yTo;
+    });
+  }
+  if(cat) filtered = filtered.filter(e => e.category.toLowerCase().includes(cat.toLowerCase()));
+  
+  renderTable(filtered);
+  updateSummary(filtered);
+  renderCharts(mode, y, m, yFrom, yTo, cat);
+});
+
+/* Reset Filter (Unchanged) */
+resetFilter.addEventListener("click", ()=> {
+  filterCategory.value = "";
+  const now = new Date();
+  filterYear.value = now.getFullYear();
+  filterMonth.value = now.getMonth() + 1;
+  filterYearFrom.value = now.getFullYear() - 5;
+  filterYearTo.value = now.getFullYear();
+  // refreshAll will be called by onSnapshot, but we can trigger a render manually
+  renderTable();
+  updateSummary();
+  renderCharts(viewMode.value, filterYear.value, filterMonth.value, filterYearFrom.value, filterYearTo.value, "");
+});
+
+/* Export (Unchanged) / Import (Modified) */
+exportBtn.addEventListener("click", ()=> {
+  exportCSV(entries);
+});
+
+importBtn.addEventListener("click", ()=> importFile.click());
+importFile.addEventListener("change", (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const text = ev.target.result;
+    importCSV(text);
+    importFile.value = "";
+  };
+  reader.readAsText(f);
+});
+
+function exportCSV(list){
+  const rows = [["id","date","type","category","amount","note","recurring"]];
+  for(const e of list){
+    rows.push([e.id,e.date,e.type,e.category,e.amount,e.note || "", e.recurring ? "1":"0"]);
+  }
+  const csv = rows.map(r=> r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = "expenses_export.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// (Modified) Import to add docs to Firebase
+async function importCSV(text){
+  if (!isFirebaseReady) {
+    alert("Please wait, connecting to database...");
+    return;
+  }
+  
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if(lines.length <= 1) return alert("No data found in CSV.");
+  
+  const newEntries = [];
+  for(let i=1;i<lines.length;i++){
+    const cols = parseCSVLine(lines[i]);
+    if(!cols || cols.length < 6) continue;
+    // We don't import the ID, Firebase will generate one
+    const e = { 
+      date: cols[1], 
+      type: cols[2], 
+      category: cols[3], 
+      amount: parseFloat(cols[4])||0, 
+      note: cols[5], 
+      recurring: cols[6] === "1" 
+    };
+    newEntries.push(e);
+  }
+  
+  if (newEntries.length === 0) {
+    alert("No valid entries found to import.");
+    return;
+  }
+
+  alert(`Starting import of ${newEntries.length} entries...`);
+  let importedCount = 0;
+  try {
+    for (const entry of newEntries) {
+      await addDoc(getEntriesCollection(), entry);
+      importedCount++;
+    }
+    // onSnapshot will refresh the UI
+    alert(`Successfully imported ${importedCount} entries.`);
+  } catch (e) {
+    console.error("Error during import:", e);
+    alert(`Error after importing ${importedCount} entries. Please try again.`);
+  }
+}
+
+function parseCSVLine(line){
+  const res = [];
+  let cur = "", inQuotes = false;
+  for(let i=0;iGAC;i++){
+    const ch = line[i];
+    if(ch === '"' && line[i+1] === '"'){ cur += '"'; i++; continue; }
+    if(ch === '"'){ inQuotes = !inQuotes; continue; }
+    if(ch === ',' && !inQuotes){ res.push(cur); cur = ""; continue; }
+    cur += ch;
+  }
+  res.push(cur);
+  return res;
+}
+
+/* (Modified) Recurring entries - now adds to Firebase */
+async function applyRecurringEntriesForMonth(year, month){
+  if (!isFirebaseReady) return;
+
+  const recurringTemplates = entries.filter(e => e.recurring);
+  let addedNew = false;
+  
+  for(const t of recurringTemplates){
+    const exists = entries.some(e => {
+      // Check if a non-template entry already exists for this month/cat/amount/type
+      const d = new Date(e.date);
+      return !e.recurring && // Make sure it's not a template itself
+             e.category === t.category && 
+             e.amount === t.amount && 
+             e.type === t.type && 
+             d.getFullYear() === +year && 
+             (d.getMonth()+1) === +month;
+    });
+    
+    if(!exists){
+      const templateDate = new Date(t.date);
+      const viewDate = new Date(+year, +month - 1, 1);
+      
+      if (templateDate <= viewDate) {
+        const day = templateDate.getDate();
+        const daysInMonth = new Date(+year, +month, 0).getDate();
+        const newDay = Math.min(day, daysInMonth);
+        const newDate = `${year}-${String(month).padStart(2,'0')}-${String(newDay).padStart(2,'0')}`;
+        
+        // Add as a *non-recurring* copy to Firebase
+        try {
+          await addDoc(getEntriesCollection(), {
+            date: newDate, 
+            category: t.category, 
+            amount: t.amount, 
+            type: t.type, 
+            note: t.note, 
+            recurring: false, // This is an *instance*
+            recurringTemplateId: t.id // Link to original
+          });
+          addedNew = true;
+        } catch (e) {
+          console.error("Error adding recurring instance:", e);
+        }
+      }
+    }
+  }
+  // No need to saveEntries() or return, onSnapshot will handle refresh
+}
+
+/* (Modified) Reminders - uses saveSettings to Firebase */
+let lastReminderDate = null; // Will be set by loadSettings
+
+reminderToggle.addEventListener("change", async ()=>{
+  settings.reminderEnabled = reminderToggle.checked;
+  await saveSettings(); // Save to Firebase
+  
+  if(reminderToggle.checked){
+    if(Notification && Notification.permission !== "granted"){
+      const p = await Notification.requestPermission();
+      if(p !== "granted"){ 
+        alert("Notifications not granted — reminders won't work."); 
+        reminderToggle.checked = false; 
+        settings.reminderEnabled = false; 
+        await saveSettings(); 
+        return; 
+      }
+    }
+    scheduleReminderTick();
+  } else {
+    if(reminderIntervalId) clearInterval(reminderIntervalId);
+  }
+});
+
+let reminderIntervalId = null;
+function scheduleReminderTick(){
+  if(reminderIntervalId) clearInterval(reminderIntervalId);
+  reminderIntervalId = setInterval(() => {
+    checkAndNotifyReminder();
+  }, 60*1000); // every minute
+  checkAndNotifyReminder();
+}
+
+async function checkAndNotifyReminder(){
+  if(!settings.reminderEnabled) return;
+  const now = new Date();
+  const hh = now.getHours(), mm = now.getMinutes();
+  const today = now.toISOString().slice(0,10);
+  
+  if(hh === 22 && mm === 0 && lastReminderDate !== today){
+    lastReminderDate = today;
+    settings.lastReminderDate = lastReminderDate;
+    await saveSettings(); // Save last reminder date to Firebase
+    
+    showReminderNotification();
+    if(confirm("It's 10:00 PM — don't forget to add today's expenses/earnings. Open the form now?")){
+      window.scrollTo({top:0,behavior:'smooth'});
+      inpDate.value = todayISO();
+    }
+  }
+}
+
+function showReminderNotification(){
+  if(Notification && Notification.permission === "granted"){
+    new Notification("Expense Calculator", { 
+      body: "It's 10:00 PM — add today's expenses/earnings!", 
+      icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>",
+      tag: "expense-reminder"
+    });
+  }
+}
+
+/* (Modified) Theme - uses saveSettings to Firebase */
+darkToggle.addEventListener("change", applyTheme);
+async function applyTheme(){
+  if(darkToggle.checked){
+    settings.darkMode = true;
+    document.documentElement.setAttribute("data-theme","dark");
+    themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light';
+  } else {
+    settings.darkMode = false;
+    document.documentElement.setAttribute("data-theme","light");
+    themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark';
+  }
+  await saveSettings();
+  // We need to re-render charts for theme change
+  refreshAllCharts();
+}
+
+/* Utility: sanitize (Unchanged) */
+function escapeHtml(s){
+  if(!s) return "";
+  return String(s).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+}
+
+/* (Modified) Budget - uses saveSettings to Firebase */
+budgetInput.addEventListener("change", async ()=>{
+  const v = parseFloat(budgetInput.value);
+  if(!isNaN(v) && v > 0) settings.budget = v;
+  else delete settings.budget;
+  await saveSettings();
+  updateSummary(); // Manually update summary (settings don't trigger snapshot)
+});
+
+/* (Modified) View change - calls applyRecurring */
+viewMode.addEventListener("change", async ()=> {
+  updateFilterUI();
+  const mode = viewMode.value;
+  if (mode === 'daily') {
+    const year = filterYear.value;
+    const month = filterMonth.value;
+    await applyRecurringEntriesForMonth(year, month);
+  }
+  // Re-render charts for new view
+  refreshAllCharts();
+});
+
+/* (Modified) Apply filters - calls applyRecurring */
+applyFilter.addEventListener("click", async ()=> {
+  const mode = viewMode.value;
+  if (mode === 'daily') {
+    const year = filterYear.value;
+    const month = filterMonth.value;
+    await applyRecurringEntriesForMonth(year, month);
+  }
+  // Manually trigger a filter/render.
+  // onSnapshot will catch the new recurring entries, but this
+  // applies the *other* filters (like category) immediately.
+  refreshAll();
+});
+
+/* (Modified) Initial refresh */
+function refreshAll(){
+  // This function is now called by onSnapshot
+  // It just needs to re-render everything based on the global `entries` array
+  
+  // ensure recurring entries for current month on load
+  if (!isFirebaseReady) {
+    // If firebase isn't ready (i.e., logged out), just clear
+    renderTable();
+    updateSummary();
+    refreshAllCharts();
+    return;
+  }
+  
+  const mode = viewMode.value;
+  if (mode === 'daily') {
+    const year = filterYear.value;
+    const month = filterMonth.value;
+    // We call this, but don't await, onSnapshot will catch changes
+    applyRecurringEntriesForMonth(year, month);
+  }
+
+  renderTable();
+  updateSummary();
+  refreshAllCharts();
+}
+
+// Helper to just refresh charts
+function refreshAllCharts() {
+  const mode = viewMode.value;
+  const cat = filterCategory.value.trim();
+  
+  if (mode === 'yearly' && filterYearFrom.value && filterYearTo.value) {
+    renderCharts(mode, null, null, filterYearFrom.value, filterYearTo.value, cat);
+  } else if (mode === 'monthly' && filterYear.value) {
+    renderCharts(mode, filterYear.value, null, null, null, cat);
+  } else if (mode === 'daily' && filterYear.value && filterMonth.value) {
+    renderCharts(mode, filterYear.value, filterMonth.value, null, null, cat);
+  } else {
+    // Not enough data to render chart yet, clear them
+    if(barChart) barChart.destroy();
+    if(pieChart) pieChart.destroy();
+  }
+}
+
+/* (Modified) Startup */
+// We just call initFirebase, the rest is handled by the auth callback
+initFirebase();
+
+</script>
+</body>
+</html>
+
