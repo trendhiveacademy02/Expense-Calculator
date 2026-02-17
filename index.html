@@ -142,6 +142,37 @@
       </div>
     </header>
 
+    <!-- SECTION 0: QUICK STATS (ADDED) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 fade-in">
+        <div class="card p-4 flex items-center justify-between border-l-4 border-l-green-500">
+            <div>
+                <p class="text-[10px] font-bold text-muted uppercase tracking-wider">Total Income</p>
+                <h3 id="dispIncome" class="text-2xl font-bold text-green-600">₹0</h3>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+        </div>
+        <div class="card p-4 flex items-center justify-between border-l-4 border-l-red-500">
+            <div>
+                <p class="text-[10px] font-bold text-muted uppercase tracking-wider">Total Expense</p>
+                <h3 id="dispExpense" class="text-2xl font-bold text-red-600">₹0</h3>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+        </div>
+        <div class="card p-4 flex items-center justify-between border-l-4 border-l-blue-500">
+            <div>
+                <p class="text-[10px] font-bold text-muted uppercase tracking-wider">Net Balance</p>
+                <h3 id="dispBalance" class="text-2xl font-bold text-blue-600">₹0</h3>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                <i class="fas fa-wallet"></i>
+            </div>
+        </div>
+    </div>
+
     <!-- SECTION 1: HEALTH & PREDICTION -->
     <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
         <!-- Health Score Card -->
@@ -504,8 +535,12 @@ function resetFilters() {
 /* --- FINANCIAL INTELLIGENCE & DATA PROCESS --- */
 
 function processData(entries) {
-    // 1. Sort by Date Ascending for calculation
-    let sorted = [...entries].sort((a,b) => new Date(a.date) - new Date(b.date));
+    // 1. Sort by Date Ascending + Created At Ascending for correct chronological balance calc
+    let sorted = [...entries].sort((a,b) => {
+        const diff = new Date(a.date) - new Date(b.date);
+        if(diff !== 0) return diff;
+        return (new Date(a.createdAt||0)) - (new Date(b.createdAt||0));
+    });
     
     // 2. Calculate Monthly Running Balance (Resets to 0 each month)
     let runningBal = 0;
@@ -531,7 +566,6 @@ function processData(entries) {
         }
         
         // LOGIC: If we haven't seen income yet this month, force visual balance to 0 (or prevent negative)
-        // User request: "stay it 0 until there is update in income section"
         let displayBal = runningBal;
         if (!incomeSeen && runningBal < 0) {
             displayBal = 0;
@@ -608,8 +642,18 @@ function renderAll() {
     // Sorting
     const sortMode = $("sortBy").value;
     filtered.sort((a,b) => {
-        if(sortMode === 'date-asc') return a.timestamp - b.timestamp;
-        if(sortMode === 'date-desc') return b.timestamp - a.timestamp;
+        if(sortMode === 'date-asc') {
+            const diff = a.timestamp - b.timestamp;
+            if(diff !== 0) return diff;
+            // Stable sort: Created At Ascending (Oldest first)
+            return (new Date(a.createdAt||0)) - (new Date(b.createdAt||0));
+        }
+        if(sortMode === 'date-desc') {
+            const diff = b.timestamp - a.timestamp;
+            if(diff !== 0) return diff;
+            // Stable sort: Created At Descending (Newest first - "New data on top")
+            return (new Date(b.createdAt||0)) - (new Date(a.createdAt||0));
+        }
         if(sortMode === 'amt-high') return b.amount - a.amount;
         if(sortMode === 'amt-low') return a.amount - b.amount;
     });
@@ -620,8 +664,19 @@ function renderAll() {
     
     renderTable(paged);
     updateCharts(filtered, fYear, fMonth);
-    
+    updateQuickStats(filtered);
+
     $("pageInd").innerText = `Page ${currentPage} of ${Math.ceil(filtered.length/pageSize) || 1}`;
+}
+
+function updateQuickStats(list) {
+    const inc = list.filter(e => e.type === 'earning').reduce((acc, curr) => acc + parseFloat(curr.amount), 0);
+    const exp = list.filter(e => e.type === 'expense').reduce((acc, curr) => acc + parseFloat(curr.amount), 0);
+    const bal = inc - exp;
+
+    $("dispIncome").innerText = formatCur(inc);
+    $("dispExpense").innerText = formatCur(exp);
+    $("dispBalance").innerText = formatCur(bal);
 }
 
 function updateHealthUI(health) {
