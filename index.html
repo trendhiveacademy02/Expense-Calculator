@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Expense Calculator — Enhanced</title>
+  <title>Personal Financial Intelligence Dashboard</title>
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -20,8 +20,8 @@
       --text-main: #1e293b;
       --text-muted: #64748b;
       --border-color: #e2e8f0;
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
     }
     [data-theme="dark"]{
       --bg-body: #0f172a;
@@ -29,8 +29,8 @@
       --text-main: #f1f5f9;
       --text-muted: #94a3b8;
       --border-color: #334155;
-      --primary: #60a5fa;
-      --primary-hover: #3b82f6;
+      --primary: #3b82f6;
+      --primary-hover: #60a5fa;
     }
 
     /* --- BASE STYLES --- */
@@ -45,484 +45,347 @@
     .card { 
       background: var(--card-bg); 
       border: 1px solid var(--border-color);
-      border-radius: 16px; 
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      transition: all 0.3s ease;
-    }
-    .card:hover {
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      border-radius: 12px; 
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
     }
     
     .input-field {
       width: 100%;
-      padding: 0.6rem 1rem;
+      padding: 0.5rem 0.75rem;
       border-radius: 0.5rem;
       border: 1px solid var(--border-color);
-      background-color: var(--card-bg);
+      background-color: var(--card-bg); /* Fixed bg for inputs */
       color: var(--text-main);
-      transition: all 0.2s;
+      font-size: 0.875rem;
+      transition: border-color 0.2s;
     }
-    .input-field:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-    }
+    .input-field:focus { outline: none; border-color: var(--primary); ring: 2px solid rgba(37, 99, 235, 0.1); }
 
     .btn { 
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
+      padding: 0.5rem 1.25rem; border-radius: 0.5rem; font-weight: 600; font-size: 0.875rem;
+      transition: all 0.2s; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
     }
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .btn-primary { background-color: var(--primary); color: white; }
     .btn-primary:hover { background-color: var(--primary-hover); }
-    
     .btn-outline { border: 1px solid var(--border-color); color: var(--text-muted); background: transparent; }
-    .btn-outline:hover { background-color: var(--bg-body); color: var(--text-main); }
-    
-    .btn-danger { background-color: #ef4444; color: white; }
-    .btn-danger:hover { background-color: #dc2626; }
-
-    /* --- SCROLLBAR --- */
-    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    [data-theme="dark"] .custom-scroll::-webkit-scrollbar-thumb { background: #475569; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-    /* --- AUTOCOMPLETE --- */
-    .autocomplete-list {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      z-index: 50;
-      max-height: 200px;
-      overflow-y: auto;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 0.5rem;
-      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-      margin-top: 0.25rem;
-      display: none;
-    }
-    .autocomplete-item {
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      color: var(--text-main);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .autocomplete-item:hover, .autocomplete-item.active {
-      background-color: var(--bg-body);
-    }
-    .autocomplete-item .new-badge {
-      font-size: 0.7rem;
-      background: #e0f2fe;
-      color: #0369a1;
-      padding: 2px 6px;
-      border-radius: 4px;
-    }
+    .btn-outline:hover { background-color: var(--bg-body); color: var(--text-main); border-color: var(--text-muted); }
 
     /* --- UTILS --- */
     .text-muted { color: var(--text-muted); }
     .chart-container { position: relative; height: 300px; width: 100%; }
-    .fade-in { animation: fadeIn 0.4s ease-out; }
+    .fade-in { animation: fadeIn 0.5s ease-out; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    
     .hidden { display: none !important; }
+
+    /* --- HEALTH SCORE GAUGE --- */
+    .health-ring { 
+      width: 120px; height: 120px; border-radius: 50%; 
+      background: conic-gradient(var(--primary) var(--progress), var(--border-color) 0deg);
+      display: flex; align-items: center; justify-content: center; position: relative;
+    }
+    .health-inner { 
+      width: 100px; height: 100px; background: var(--card-bg); border-radius: 50%; 
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+
+    /* --- SCROLL --- */
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    [data-theme="dark"] .custom-scroll::-webkit-scrollbar-thumb { background: #475569; }
+
+    /* --- FAB --- */
+    .fab {
+        position: fixed; bottom: 2rem; right: 2rem; width: 3.5rem; height: 3.5rem;
+        background-color: var(--primary); color: white; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2); cursor: pointer; z-index: 50;
+        transition: transform 0.2s;
+    }
+    .fab:hover { transform: scale(1.1); }
   </style>
 </head>
 <body data-theme="light">
 
-  <!-- ============================
-       AUTH SCREEN
-       ============================ -->
-  <div id="auth-container" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800 transition-colors duration-300">
+  <!-- AUTH OVERLAY -->
+  <div id="auth-container" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-100 dark:bg-slate-900 transition-colors">
     <div class="card w-full max-w-md p-8 shadow-2xl">
-      <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 text-blue-600 text-3xl mb-4">
-          <i class="fas fa-wallet"></i>
-        </div>
-        <h1 class="text-3xl font-bold text-slate-800 dark:text-white">Expense Tracker</h1>
-        <p class="text-slate-500 mt-2">Manage your finances efficiently</p>
+      <div class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-slate-800 dark:text-white"><i class="fas fa-brain text-blue-500"></i> Fin.Intel</h1>
+        <p class="text-slate-500 text-sm">Personal Financial Intelligence Dashboard</p>
       </div>
-
-      <div id="auth-forms">
-        <!-- Login Form -->
-        <form id="login-form" class="space-y-4 fade-in">
-          <div>
-            <label class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Email Address</label>
-            <input id="login-email" type="email" placeholder="you@example.com" class="input-field" required />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Password</label>
-            <input id="login-password" type="password" placeholder="••••••••" class="input-field" required />
-          </div>
-          <button type="submit" class="btn btn-primary w-full py-3 shadow-lg shadow-blue-500/30">Sign In</button>
-          
-          <div id="login-error" class="text-red-500 text-sm text-center hidden p-2 bg-red-50 rounded"></div>
-          
-          <div class="text-center mt-4">
-            <span class="text-sm text-slate-500">New here?</span>
-            <button type="button" id="show-signup" class="text-sm text-blue-600 font-semibold hover:underline">Create an account</button>
-          </div>
-        </form>
-        
-        <!-- Signup Form -->
-        <form id="signup-form" class="space-y-4 fade-in hidden">
-          <div>
-            <label class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Email Address</label>
-            <input id="signup-email" type="email" placeholder="you@example.com" class="input-field" required />
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">Password (min. 6 chars)</label>
-            <input id="signup-password" type="password" placeholder="••••••••" class="input-field" required />
-          </div>
-          <button type="submit" class="btn btn-primary w-full py-3 shadow-lg shadow-blue-500/30">Sign Up</button>
-          
-          <div id="signup-error" class="text-red-500 text-sm text-center hidden p-2 bg-red-50 rounded"></div>
-          
-          <div class="text-center mt-4">
-            <span class="text-sm text-slate-500">Already have an account?</span>
-            <button type="button" id="show-login" class="text-sm text-blue-600 font-semibold hover:underline">Sign In</button>
-          </div>
-        </form>
-      </div>
+      <form id="auth-form" class="space-y-4">
+        <input id="auth-email" type="email" placeholder="Email" class="input-field" required />
+        <input id="auth-pass" type="password" placeholder="Password" class="input-field" required />
+        <button type="submit" class="btn btn-primary w-full py-3">Access Dashboard</button>
+        <div id="auth-error" class="text-red-500 text-xs text-center hidden"></div>
+        <div class="text-center text-xs text-blue-500 cursor-pointer hover:underline" id="toggle-auth-mode">Need an account? Sign Up</div>
+      </form>
     </div>
   </div>
 
-  <!-- ============================
-       MAIN APP CONTAINER
-       ============================ -->
-  <div id="app-container" class="max-w-7xl mx-auto p-4 md:p-6 hidden">
+  <!-- APP CONTAINER -->
+  <div id="app-container" class="max-w-7xl mx-auto p-4 md:p-6 hidden pb-24">
     
-    <!-- Header -->
-    <header class="flex flex-col md:flex-row items-center justify-between mb-8 gap-4 fade-in">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg">
-          <i class="fas fa-chart-pie"></i>
-        </div>
-        <h1 class="text-2xl font-bold tracking-tight">Dashboard</h1>
+    <!-- HEADER -->
+    <header class="flex flex-col md:flex-row items-center justify-between mb-6 gap-4 fade-in">
+      <div>
+        <h1 class="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <i class="fas fa-layer-group text-blue-600"></i> Financial Intelligence
+        </h1>
+        <p class="text-xs text-muted">Advanced Analytics & Predictive Modeling</p>
       </div>
-      
-      <div class="flex flex-wrap items-center justify-center gap-3 bg-white dark:bg-slate-800 p-2 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-        <span id="auth-status" class="text-xs font-medium px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300">
-          <i class="fas fa-circle text-green-500 text-[8px] mr-1"></i> Connected
-        </span>
-        <button id="themeToggle" class="btn btn-outline text-xs py-1.5 px-3 rounded-lg" title="Toggle Theme">
-          <i class="fas fa-moon"></i>
-        </button>
-        <button id="btnSignOut" class="btn btn-outline text-xs py-1.5 px-3 rounded-lg text-red-500 hover:text-red-600 hover:bg-red-50 border-red-200">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </button>
+      <div class="flex gap-2">
+        <button id="themeToggle" class="btn btn-outline py-1.5 px-3"><i class="fas fa-moon"></i></button>
+        <button id="btnSignOut" class="btn btn-outline py-1.5 px-3 text-red-500 border-red-200">Logout</button>
       </div>
     </header>
 
-    <!-- Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      
-      <!-- LEFT COLUMN: Form & Stats (lg:col-span-4) -->
-      <div class="lg:col-span-4 space-y-6">
-        
-        <!-- Quick Stats Cards (Mobile First Stack) -->
-        <div class="grid grid-cols-3 gap-3 fade-in">
-          <div class="card p-3 text-center border-l-4 border-l-green-500">
-            <div class="text-xs text-muted font-medium uppercase tracking-wider mb-1">Income</div>
-            <div id="sumEarned" class="text-sm md:text-base font-bold text-green-600 truncate">₹0</div>
-          </div>
-          <div class="card p-3 text-center border-l-4 border-l-red-500">
-            <div class="text-xs text-muted font-medium uppercase tracking-wider mb-1">Expense</div>
-            <div id="sumSpent" class="text-sm md:text-base font-bold text-red-600 truncate">₹0</div>
-          </div>
-          <div id="netCard" class="card p-3 text-center border-l-4 border-l-blue-500">
-            <div class="text-xs text-muted font-medium uppercase tracking-wider mb-1">Balance</div>
-            <div id="sumNet" class="text-sm md:text-base font-bold text-blue-600 truncate">₹0</div>
-          </div>
-        </div>
-
-        <!-- Add Entry Form -->
-        <div class="card p-5 fade-in">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="font-semibold text-lg flex items-center gap-2">
-              <i class="fas fa-plus-circle text-blue-500"></i> New Entry
-            </h2>
-            <button id="btnClear" class="text-xs text-slate-400 hover:text-slate-600 transition-colors">
-              <i class="fas fa-eraser"></i> Clear
-            </button>
-          </div>
-
-          <div class="space-y-3">
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="text-xs font-semibold text-muted mb-1 block">Date</label>
-                <input id="inpDate" type="date" class="input-field text-sm" />
-              </div>
-              <div>
-                <label class="text-xs font-semibold text-muted mb-1 block">Type</label>
-                <select id="inpType" class="input-field text-sm cursor-pointer">
-                  <option value="expense">Expense</option>
-                  <option value="earning">Income</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label class="text-xs font-semibold text-muted mb-1 block">Category</label>
-              <input id="inpCategory" type="text" placeholder="e.g. Groceries, Fuel" class="input-field text-sm" list="categoryList" />
-              <datalist id="categoryList"></datalist>
-            </div>
-
-            <div>
-              <label class="text-xs font-semibold text-muted mb-1 block">Amount (₹)</label>
-              <input id="inpAmount" type="number" step="0.01" placeholder="0.00" class="input-field text-sm font-mono" />
-            </div>
-
-            <div>
-              <label class="text-xs font-semibold text-muted mb-1 block">Note (Optional)</label>
-              <textarea id="inpNote" rows="2" placeholder="Brief description..." class="input-field text-sm resize-none"></textarea>
-            </div>
-
-            <label class="flex items-center gap-2 p-3 rounded-lg border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 cursor-pointer hover:bg-slate-100 transition-colors">
-              <input id="inpRecurring" type="checkbox" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
-              <span class="text-sm text-slate-600 dark:text-slate-300 select-none">Repeat monthly</span>
-            </label>
-
-            <button id="btnAdd" class="btn btn-primary w-full py-2.5 shadow-md">
-              <i class="fas fa-check"></i> Save Entry
-            </button>
-          </div>
-        </div>
-
-        <!-- Budget & Settings -->
-        <div class="card p-5 fade-in">
-           <h2 class="font-semibold text-lg mb-3 flex items-center gap-2">
-             <i class="fas fa-sliders-h text-slate-500"></i> Controls
-           </h2>
-           
-           <div class="space-y-4">
-             <div>
-               <label class="text-xs font-semibold text-muted mb-1 block">Monthly Budget Target</label>
-               <div class="relative">
-                 <span class="absolute left-3 top-2.5 text-slate-400">₹</span>
-                 <input id="budgetInput" type="number" class="input-field pl-7" placeholder="Set limit..." />
-               </div>
-               <div id="budgetAlert" class="mt-2 hidden text-xs p-2 rounded bg-red-100 text-red-700"></div>
-             </div>
-
-             <div class="flex items-center justify-between py-2 border-t border-slate-100 dark:border-slate-700">
-               <span class="text-sm text-slate-600 dark:text-slate-300">Daily 10PM Reminder</span>
-               <label class="relative inline-flex items-center cursor-pointer">
-                 <input id="reminderToggle" type="checkbox" class="sr-only peer">
-                 <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-               </label>
-             </div>
-
-             <div class="grid grid-cols-2 gap-2 pt-2">
-                <button id="exportBtn" class="btn btn-outline text-xs justify-center">
-                  <i class="fas fa-download"></i> Export CSV
-                </button>
-                <input id="importFile" type="file" accept=".csv" class="hidden" />
-                <button id="importBtn" class="btn btn-outline text-xs justify-center">
-                  <i class="fas fa-upload"></i> Import CSV
-                </button>
-             </div>
-           </div>
-        </div>
-      </div>
-
-      <!-- RIGHT COLUMN: Filters, Charts, Table (lg:col-span-8) -->
-      <div class="lg:col-span-8 space-y-6">
-        
-        <!-- Filters Toolbar -->
-        <div class="card p-4 fade-in">
-          <div class="flex flex-col md:flex-row gap-4 items-end md:items-center">
-            
-            <!-- View Mode -->
-            <div class="w-full md:w-auto min-w-[140px]">
-               <label class="text-xs font-bold text-muted uppercase mb-1 block">View Mode</label>
-               <div class="relative">
-                 <select id="viewMode" class="input-field appearance-none cursor-pointer font-medium">
-                   <option value="daily">Daily</option>
-                   <option value="monthly">Monthly</option>
-                   <option value="yearly">Yearly</option>
-                 </select>
-                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                   <i class="fas fa-chevron-down text-xs"></i>
-                 </div>
-               </div>
-            </div>
-
-            <!-- Dynamic Date Selectors -->
-            <div class="flex-1 w-full flex flex-col md:flex-row gap-2">
-              
-              <!-- Year Range (Yearly View) -->
-              <div id="yearRangeContainer" class="hidden flex gap-2 w-full">
-                <div class="w-1/2">
-                   <label class="text-xs font-bold text-muted uppercase mb-1 block">From</label>
-                   <select id="filterYearFrom" class="input-field"></select>
+    <!-- SECTION 1: HEALTH & PREDICTION -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mb-6">
+        <!-- Health Score Card -->
+        <div class="card p-6 md:col-span-4 flex flex-col items-center justify-center text-center fade-in bg-gradient-to-br from-white to-slate-50 dark:from-slate-800 dark:to-slate-900">
+            <h3 class="text-xs font-bold uppercase text-muted mb-4 tracking-wider">Financial Health Score</h3>
+            <div class="health-ring mb-4" id="healthRing" style="--progress: 0deg">
+                <div class="health-inner">
+                    <span id="healthScore" class="text-3xl font-black text-slate-800 dark:text-white">--</span>
+                    <span id="healthLabel" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500">Calculating</span>
                 </div>
-                <div class="w-1/2">
-                   <label class="text-xs font-bold text-muted uppercase mb-1 block">To</label>
-                   <select id="filterYearTo" class="input-field"></select>
-                </div>
-              </div>
-
-              <!-- Single Year -->
-              <div id="singleYearContainer" class="w-full md:w-auto">
-                 <label class="text-xs font-bold text-muted uppercase mb-1 block">Year</label>
-                 <select id="filterYear" class="input-field"></select>
-              </div>
-
-              <!-- Month -->
-              <div id="monthContainer" class="w-full md:w-auto">
-                 <label class="text-xs font-bold text-muted uppercase mb-1 block">Month</label>
-                 <select id="filterMonth" class="input-field"></select>
-              </div>
-              
-              <!-- NEW: Day Selector -->
-              <div id="dayContainer" class="w-full md:w-auto hidden">
-                 <label class="text-xs font-bold text-muted uppercase mb-1 block">Day</label>
-                 <select id="filterDay" class="input-field">
-                   <option value="all">All Days</option>
-                   <!-- Populated via JS -->
-                 </select>
-              </div>
             </div>
-          </div>
-          
-          <div class="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex flex-col md:flex-row gap-3">
-             <!-- NEW: Smart Category Filter -->
-             <div class="relative w-full md:w-64">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <i class="fas fa-search text-slate-400"></i>
+            <div class="grid grid-cols-3 gap-2 w-full text-xs mt-2 border-t pt-4 dark:border-slate-700">
+                <div>
+                    <div class="text-muted mb-1">Runway</div>
+                    <div id="metricRunway" class="font-bold text-slate-700 dark:text-slate-200">-- Mo</div>
                 </div>
-                <input id="filterCategory" type="text" placeholder="Filter Category..." class="input-field pl-9" autocomplete="off" />
-                <!-- Autocomplete Dropdown -->
-                <ul id="categorySuggestions" class="autocomplete-list custom-scroll"></ul>
-             </div>
-
-             <div class="flex gap-2 ml-auto">
-               <button id="applyFilter" class="btn btn-primary text-sm shadow-sm flex-1 md:flex-none">
-                 Apply
-               </button>
-               <button id="resetFilter" class="btn btn-outline text-sm flex-1 md:flex-none">
-                 Reset
-               </button>
-             </div>
-          </div>
+                <div>
+                    <div class="text-muted mb-1">Savings Rate</div>
+                    <div id="metricSavingsRate" class="font-bold text-green-600">--%</div>
+                </div>
+                <div>
+                    <div class="text-muted mb-1">Volatility</div>
+                    <div id="metricVolatility" class="font-bold text-amber-600">--</div>
+                </div>
+            </div>
         </div>
 
-        <!-- Charts Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- NEW: Trend Chart -->
-          <div class="card p-4 fade-in md:col-span-2">
-            <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-              <i class="fas fa-chart-line text-indigo-500"></i> Financial Trend
-            </h3>
-            <div class="chart-container" style="height: 250px;">
-              <canvas id="trendChart"></canvas>
-            </div>
-          </div>
-
-          <div class="card p-4 fade-in">
-            <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-              <i class="fas fa-chart-bar text-blue-500"></i> Income vs Expense
-            </h3>
-            <div class="chart-container" style="height: 220px;">
-              <canvas id="barChart"></canvas>
-            </div>
-          </div>
-
-          <div class="card p-4 fade-in">
-            <h3 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
-              <i class="fas fa-chart-pie text-purple-500"></i> Spending by Category
-            </h3>
-            <div class="chart-container" style="height: 220px;">
-              <canvas id="pieChart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- Entries Table -->
-        <div class="card fade-in overflow-hidden">
-          <div class="p-4 border-b border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 flex flex-col sm:flex-row justify-between items-center gap-3">
-            <h3 class="font-bold text-lg flex items-center gap-2">
-              <i class="fas fa-list text-slate-400"></i> Transactions
+        <!-- Predictive Analytics -->
+        <div class="card p-6 md:col-span-8 fade-in">
+            <h3 class="text-xs font-bold uppercase text-muted mb-4 flex justify-between items-center">
+                <span><i class="fas fa-crystal-ball text-purple-500 mr-1"></i> AI-Free Insights Engine</span>
             </h3>
             
-            <!-- NEW: Sorting Control -->
-            <div class="flex items-center gap-2">
-              <label class="text-xs font-semibold text-muted whitespace-nowrap">Sort by:</label>
-              <select id="sortBy" class="input-field text-sm py-1 px-2 w-auto">
-                <option value="date-desc">Date (Newest)</option>
-                <option value="date-asc">Date (Oldest)</option>
-                <option value="amount-desc">Amount (High)</option>
-                <option value="amount-asc">Amount (Low)</option>
-                <option value="category-asc">Category (A-Z)</option>
-              </select>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Budget Prediction -->
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted">Month Progress</span>
+                        <span id="monthProgressTxt" class="font-mono font-bold">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2">
+                        <div id="monthProgressBar" class="bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                    
+                    <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 mt-2">
+                        <div class="text-xs text-muted uppercase">Predicted End-of-Month Expense</div>
+                        <div class="flex items-end gap-2 mt-1">
+                            <span id="predTotal" class="text-xl font-bold text-slate-800 dark:text-white">₹0</span>
+                            <span id="predDiff" class="text-xs font-bold mb-1"></span>
+                        </div>
+                        <div class="text-[10px] text-muted mt-1">Based on daily burn rate of <span id="burnRate" class="font-mono">₹0</span></div>
+                    </div>
+                </div>
+
+                <!-- Insights List -->
+                <div class="h-full max-h-[140px] overflow-y-auto custom-scroll pr-1">
+                    <ul id="insightsList" class="space-y-2 text-xs">
+                        <li class="p-2 bg-slate-50 dark:bg-slate-800 rounded border-l-2 border-slate-300">Initializing Intelligence Engine...</li>
+                    </ul>
+                </div>
             </div>
-          </div>
-
-          <div class="overflow-x-auto custom-scroll" style="max-height: 400px;">
-            <table class="w-full text-left border-collapse">
-              <thead class="bg-slate-100 dark:bg-slate-900 sticky top-0 z-10 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                <tr>
-                  <th class="p-3 border-b border-slate-200 dark:border-slate-700">Date</th>
-                  <th class="p-3 border-b border-slate-200 dark:border-slate-700">Category</th>
-                  <th class="p-3 border-b border-slate-200 dark:border-slate-700">Note</th>
-                  <th class="p-3 border-b border-slate-200 dark:border-slate-700 text-right">Amount</th>
-                  <th class="p-3 border-b border-slate-200 dark:border-slate-700 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody id="entriesTbody" class="text-sm divide-y divide-slate-100 dark:divide-slate-800">
-                <!-- Rows injected via JS -->
-              </tbody>
-            </table>
-          </div>
         </div>
-
-      </div>
     </div>
 
-    <footer class="mt-12 text-center text-slate-400 text-sm pb-6">
-       <p>&copy; 2024 Expense Calculator. All data securely stored in Firebase.</p>
-    </footer>
+    <!-- SECTION 2: FILTERS (REDESIGNED) -->
+    <div class="card p-5 mb-6 fade-in">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <!-- View Mode -->
+            <div>
+                <label class="text-[10px] font-bold text-muted uppercase tracking-wider mb-2 block">View Mode</label>
+                <select id="viewMode" class="input-field py-2 text-sm font-medium cursor-pointer">
+                    <option value="daily">Daily</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                    <option value="all">All Time</option>
+                </select>
+            </div>
+            <!-- Year -->
+            <div>
+                <label class="text-[10px] font-bold text-muted uppercase tracking-wider mb-2 block">Year</label>
+                <select id="filterYear" class="input-field py-2 text-sm font-medium cursor-pointer"></select>
+            </div>
+            <!-- Month -->
+            <div>
+                <label class="text-[10px] font-bold text-muted uppercase tracking-wider mb-2 block">Month</label>
+                <select id="filterMonth" class="input-field py-2 text-sm font-medium cursor-pointer"></select>
+            </div>
+            <!-- Day -->
+            <div>
+                <label class="text-[10px] font-bold text-muted uppercase tracking-wider mb-2 block">Day</label>
+                <select id="filterDay" class="input-field py-2 text-sm font-medium cursor-pointer">
+                    <option value="all">All Days</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="flex flex-col md:flex-row gap-3 items-center">
+            <div class="relative flex-1 w-full">
+                <i class="fas fa-search absolute left-3 top-3.5 text-slate-400 text-sm"></i>
+                <input id="filterCategory" type="text" placeholder="Filter Category..." class="input-field pl-10 py-2.5 text-sm" />
+            </div>
+            <div class="flex gap-2 w-full md:w-auto">
+                 <button id="applyFilter" class="btn btn-primary px-6 shadow-md hover:shadow-lg">Apply</button>
+                 <button id="resetFilter" class="btn btn-outline px-6">Reset</button>
+            </div>
+        </div>
+    </div>
 
+    <!-- SECTION 3: CHARTS (UPDATED VISUALS) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="card p-5 fade-in">
+            <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-bar text-blue-500"></i> Income vs Expense
+            </h3>
+            <div class="chart-container">
+                <canvas id="barChart"></canvas>
+            </div>
+        </div>
+        <div class="card p-5 fade-in">
+            <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
+                <i class="fas fa-chart-pie text-purple-500"></i> Spending by Category
+            </h3>
+            <div class="chart-container">
+                <canvas id="pieChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 4: DATA ENTRY & LIST -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Add Entry Card -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="card p-5 fade-in" id="addEntryCard">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-sm" id="formTitle">New Transaction</h3>
+                    <button id="btnClear" class="text-xs text-blue-500 hover:text-blue-700 font-medium">Clear All</button>
+                </div>
+                <div class="space-y-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-muted uppercase">Date</label>
+                        <input id="inpDate" type="date" class="input-field" />
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-muted uppercase">Type</label>
+                            <select id="inpType" class="input-field cursor-pointer">
+                                <option value="expense">Expense</option>
+                                <option value="earning">Income</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] font-bold text-muted uppercase">Source</label>
+                            <select id="inpSource" class="input-field cursor-pointer">
+                                <option value="UPI">UPI</option>
+                                <option value="Cash">Cash</option>
+                                <option value="Card">Card</option>
+                                <option value="Bank">Bank Transfer</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-muted uppercase">Category</label>
+                        <input id="inpCategory" type="text" list="catList" placeholder="e.g. Food, Fuel..." class="input-field" />
+                        <datalist id="catList"></datalist>
+                    </div>
+                    
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-muted uppercase">Amount</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2 text-slate-400 font-bold">₹</span>
+                            <input id="inpAmount" type="number" step="0.01" placeholder="0.00" class="input-field pl-8 font-mono font-bold" />
+                        </div>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-bold text-muted uppercase">Note</label>
+                        <input id="inpNote" type="text" placeholder="Description..." class="input-field" />
+                    </div>
+                    
+                    <div class="flex items-center gap-2 text-xs py-2">
+                        <input id="inpRecurring" type="checkbox" class="accent-blue-500 w-4 h-4 cursor-pointer" />
+                        <label for="inpRecurring" class="text-slate-600 dark:text-slate-300 cursor-pointer">Recurring Monthly?</label>
+                    </div>
+
+                    <button id="btnAdd" class="btn btn-primary w-full shadow-md">Add Transaction</button>
+                    <div id="dupWarn" class="hidden text-[10px] text-amber-600 bg-amber-50 p-2 rounded text-center border border-amber-200">
+                        <i class="fas fa-exclamation-triangle"></i> Possible duplicate detected
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction List -->
+        <div class="lg:col-span-2 card flex flex-col fade-in overflow-hidden h-[600px]">
+            <div class="p-4 border-b dark:border-slate-700 flex flex-col sm:flex-row justify-between items-center bg-slate-50 dark:bg-slate-800/50 gap-3">
+                <h3 class="font-bold text-sm">Transactions</h3>
+                
+                <div class="flex items-center gap-2">
+                    <label class="text-[10px] font-bold text-muted uppercase">Sort By:</label>
+                    <select id="sortBy" class="input-field py-1 px-2 text-xs w-auto cursor-pointer">
+                        <option value="date-desc">Date (Newest)</option>
+                        <option value="date-asc">Date (Oldest)</option>
+                        <option value="amt-high">Amount (High)</option>
+                        <option value="amt-low">Amount (Low)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex-1 overflow-auto custom-scroll p-0">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="sticky top-0 bg-white dark:bg-slate-800 shadow-sm z-10 text-muted uppercase tracking-wider font-semibold">
+                        <tr>
+                            <th class="p-3">Date</th>
+                            <th class="p-3">Details</th>
+                            <th class="p-3 text-right">Amount</th>
+                            <th class="p-3 text-right">Bal (Mo)</th>
+                            <th class="p-3 text-center">Act</th>
+                        </tr>
+                    </thead>
+                    <tbody id="txTableBody" class="divide-y divide-slate-100 dark:divide-slate-700">
+                        <!-- JS Rendered -->
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            <div class="p-3 border-t dark:border-slate-700 flex justify-between items-center text-xs bg-slate-50 dark:bg-slate-800/30">
+                 <button id="pagePrev" class="btn btn-outline py-1 px-3 bg-white dark:bg-slate-800">Prev</button>
+                 <span id="pageInd" class="text-muted font-medium">Page 1</span>
+                 <button id="pageNext" class="btn btn-outline py-1 px-3 bg-white dark:bg-slate-800">Next</button>
+            </div>
+        </div>
+    </div>
+    
   </div>
 
+  <!-- FAB -->
+  <div id="fab" class="fab md:hidden"><i class="fas fa-plus text-xl"></i></div>
+
 <script type="module">
-/* ============================
-   Firebase Integration
-   ============================ */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { 
-  getAuth, 
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { 
-  getFirestore, 
-  doc, 
-  getDoc, 
-  setDoc, 
-  addDoc, 
-  deleteDoc, 
-  collection, 
-  onSnapshot,
-  setLogLevel
-} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, addDoc, deleteDoc, updateDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBSE8QWjz_4Cf5Vlm7CIz1uCjFnF2qtpYk",
@@ -535,763 +398,489 @@ const firebaseConfig = {
   measurementId: "G-NG0MG3DJBN"
 };
 
+/* --- CORE STATE --- */
 let app, auth, db, userId;
-let entries = [], settings = {};
-let isFirebaseReady = false;
-let entriesUnsubscribe = null;
+let rawEntries = [];
+let processedEntries = []; 
+let settings = { budget: 20000, darkMode: false };
+let currentPage = 1, pageSize = 20;
+let unsubscribe = null;
+let editingId = null;
 
-const getEntriesCollection = () => collection(db, `users/${userId}/entries`);
-const getEntryDoc = (id) => doc(db, `users/${userId}/entries/${id}`);
-const getSettingsDoc = () => doc(db, `users/${userId}/settings/userSettings`);
+const $ = (id) => document.getElementById(id);
+const formatCur = (n) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(n);
 
-/* ============================
-   DOM & State
-   ============================ */
-const $ = id => document.getElementById(id);
-const todayISO = () => new Date().toISOString().slice(0,10);
-
-// App Elements
-const appContainer = $("app-container"), authContainer = $("auth-container");
-const inpDate = $("inpDate"), inpType = $("inpType"), inpCategory = $("inpCategory"),
-      inpAmount = $("inpAmount"), inpNote = $("inpNote"), inpRecurring = $("inpRecurring"),
-      btnAdd = $("btnAdd"), btnClear = $("btnClear");
-const sumEarned = $("sumEarned"), sumSpent = $("sumSpent"), sumNet = $("sumNet"), netCard = $("netCard");
-const budgetInput = $("budgetInput"), budgetAlert = $("budgetAlert");
-const exportBtn = $("exportBtn"), importBtn = $("importBtn"), importFile = $("importFile");
-const viewMode = $("viewMode"), filterYear = $("filterYear"), filterMonth = $("filterMonth"),
-      filterDay = $("filterDay"), // NEW
-      dayContainer = $("dayContainer"), // NEW
-      filterCategory = $("filterCategory"), applyFilter = $("applyFilter"), resetFilter = $("resetFilter");
-const yearRangeContainer = $("yearRangeContainer"), singleYearContainer = $("singleYearContainer"),
-      monthContainer = $("monthContainer"), filterYearFrom = $("filterYearFrom"), filterYearTo = $("filterYearTo");
-const reminderToggle = $("reminderToggle"), darkToggle = $("themeToggle"), btnSignOut = $("btnSignOut"), authStatus = $("auth-status");
-const sortBy = $("sortBy"); // NEW
-
-// Autocomplete
-const categorySuggestions = $("categorySuggestions");
-
-// Charts
-let barChart, pieChart, trendChart;
-
-/* ============================
-   Initialization & Auth
-   ============================ */
-async function initFirebase() {
-  try {
+/* --- INIT --- */
+async function init() {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
     
+    // Auth Listener
     onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        userId = user.uid;
-        isFirebaseReady = true;
-        authStatus.innerHTML = `<i class="fas fa-circle text-green-500 text-[8px] mr-1"></i> ${user.email}`;
-        
-        authContainer.classList.add('hidden');
-        appContainer.classList.remove('hidden');
-        
-        await loadSettings();
-        initUI();
-        listenForEntries();
-      } else {
-        userId = null;
-        isFirebaseReady = false;
-        authContainer.classList.remove('hidden');
-        appContainer.classList.add('hidden');
-        
-        if (entriesUnsubscribe) entriesUnsubscribe();
-        entries = []; settings = {};
-      }
+        if(user) {
+            userId = user.uid;
+            $("auth-container").classList.add("hidden");
+            $("app-container").classList.remove("hidden");
+            loadSettings();
+            subscribeData();
+            initDateFilters();
+        } else {
+            $("auth-container").classList.remove("hidden");
+            $("app-container").classList.add("hidden");
+            if(unsubscribe) unsubscribe();
+            rawEntries = [];
+        }
     });
-  } catch (e) {
-    console.error("Firebase init error", e);
-    authStatus.textContent = "Error";
-  }
+
+    // Event Listeners
+    $("themeToggle").onclick = toggleTheme;
+    $("btnSignOut").onclick = () => signOut(auth);
+    $("auth-form").onsubmit = handleAuth;
+    $("toggle-auth-mode").onclick = toggleAuthMode;
+    $("btnAdd").onclick = addEntry;
+    $("btnClear").onclick = clearForm;
+    $("applyFilter").onclick = renderAll;
+    $("resetFilter").onclick = resetFilters;
+    $("pagePrev").onclick = () => changePage(-1);
+    $("pageNext").onclick = () => changePage(1);
+    $("fab").onclick = () => $("addEntryCard").scrollIntoView({ behavior: 'smooth' });
+    $("inpAmount").oninput = checkDuplicates;
+    $("sortBy").onchange = renderAll;
+    $("inpDate").value = new Date().toISOString().split('T')[0];
+    
+    // Auto-update days when month/year changes
+    $("filterYear").onchange = initDayOptions;
+    $("filterMonth").onchange = initDayOptions;
 }
 
-function initUI(){
-  inpDate.value = todayISO();
-  const currentYear = new Date().getFullYear();
-  
-  // Populate Years
-  const populateOpts = (sel, start, end, selected) => {
-    sel.innerHTML = '';
-    for(let y=start; y<=end; y++){
-      const opt = document.createElement("option"); opt.value = y; opt.textContent = y;
-      if(y === selected) opt.selected = true;
-      sel.appendChild(opt);
+function initDateFilters() {
+    const today = new Date();
+    const ySel = $("filterYear");
+    const mSel = $("filterMonth");
+    
+    // Populate Years
+    const currentY = today.getFullYear();
+    ySel.innerHTML = "";
+    for(let i=currentY; i>=currentY-5; i--) {
+        const o = document.createElement("option"); o.value = i; o.innerText = i;
+        ySel.appendChild(o);
     }
-  };
-  populateOpts(filterYear, currentYear-10, 2050, currentYear);
-  populateOpts(filterYearFrom, currentYear-10, 2050, currentYear-5);
-  populateOpts(filterYearTo, currentYear-10, 2050, currentYear);
-
-  // Populate Months
-  filterMonth.innerHTML = '';
-  for(let m=1; m<=12; m++){
-    const opt = document.createElement("option"); opt.value = m;
-    opt.textContent = new Date(2000, m-1).toLocaleString('default', { month: 'long' });
-    if(m === (new Date().getMonth()+1)) opt.selected = true;
-    filterMonth.appendChild(opt);
-  }
-
-  // Populate Days (NEW)
-  populateDays();
-
-  // Settings
-  if(settings.budget) budgetInput.value = settings.budget;
-  if(settings.reminderEnabled) reminderToggle.checked = true;
-  if(settings.darkMode) document.body.setAttribute('data-theme', 'dark');
-
-  updateFilterUI();
-  
-  // New Event Listeners for UI enhancements
-  setupCategoryAutocomplete();
-  setupSorting();
+    
+    // Populate Months
+    mSel.innerHTML = "";
+    const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+    months.forEach((m, i) => {
+        const o = document.createElement("option"); o.value = i+1; o.innerText = m;
+        if(i === today.getMonth()) o.selected = true;
+        mSel.appendChild(o);
+    });
+    
+    initDayOptions();
 }
 
-/* ============================
-   NEW: Date & Day Logic
-   ============================ */
-function populateDays() {
-  const year = parseInt(filterYear.value);
-  const month = parseInt(filterMonth.value);
-  const daysInMonth = new Date(year, month, 0).getDate();
-  
-  // Save current selection if valid
-  const currentVal = filterDay.value;
-  
-  filterDay.innerHTML = '<option value="all">All Days</option>';
-  for(let d=1; d<=daysInMonth; d++){
-    const opt = document.createElement("option");
-    opt.value = d;
-    opt.textContent = d;
-    filterDay.appendChild(opt);
-  }
-  
-  if(currentVal && currentVal !== 'all' && parseInt(currentVal) <= daysInMonth){
-    filterDay.value = currentVal;
-  }
+function initDayOptions() {
+    const dSel = $("filterDay");
+    const y = parseInt($("filterYear").value);
+    const m = parseInt($("filterMonth").value);
+    const daysInMonth = new Date(y, m, 0).getDate();
+    
+    const prevVal = dSel.value;
+    dSel.innerHTML = '<option value="all">All Days</option>';
+    for(let i=1; i<=daysInMonth; i++) {
+        const o = document.createElement("option"); o.value = i; o.innerText = i;
+        dSel.appendChild(o);
+    }
+    if(prevVal !== 'all' && parseInt(prevVal) <= daysInMonth) dSel.value = prevVal;
 }
 
-// When month/year changes, re-populate days
-filterMonth.addEventListener('change', populateDays);
-filterYear.addEventListener('change', populateDays);
-
-function updateFilterUI() {
-  const mode = viewMode.value;
-  yearRangeContainer.classList.add('hidden');
-  singleYearContainer.classList.add('hidden');
-  monthContainer.classList.add('hidden');
-  dayContainer.classList.add('hidden'); // NEW
-  
-  if (mode === 'yearly') {
-    yearRangeContainer.classList.remove('hidden');
-  } else if (mode === 'monthly') {
-    singleYearContainer.classList.remove('hidden');
-  } else { // daily
-    singleYearContainer.classList.remove('hidden');
-    monthContainer.classList.remove('hidden');
-    dayContainer.classList.remove('hidden'); // NEW
-    populateDays();
-  }
+function resetFilters() {
+    $("viewMode").value = "daily";
+    $("filterCategory").value = "";
+    initDateFilters();
+    renderAll();
 }
-viewMode.addEventListener("change", () => {
-  updateFilterUI();
-  applyFilter.click();
-});
 
-/* ============================
-   NEW: Category Autocomplete
-   ============================ */
-function setupCategoryAutocomplete() {
-  const input = filterCategory;
-  const list = categorySuggestions;
-  let selectedIndex = -1;
+/* --- FINANCIAL INTELLIGENCE & DATA PROCESS --- */
 
-  // Show suggestions on input
-  input.addEventListener('input', () => {
-    const val = input.value.toLowerCase();
-    const uniqueCats = [...new Set(entries.map(e => e.category))].sort();
+function processData(entries) {
+    // 1. Sort by Date Ascending for calculation
+    let sorted = [...entries].sort((a,b) => new Date(a.date) - new Date(b.date));
+    
+    // 2. Calculate Monthly Running Balance (Resets to 0 each month)
+    let runningBal = 0;
+    let currentKey = "";
+    let incomeSeen = false; // Flag for "Stay 0" logic
+    
+    processedEntries = sorted.map(e => {
+        const d = new Date(e.date);
+        const key = `${d.getFullYear()}-${d.getMonth()}`; // Group by month
+        
+        if(key !== currentKey) {
+            currentKey = key;
+            runningBal = 0; // RESET BALANCE
+            incomeSeen = false; // Reset income flag
+        }
+        
+        const amt = parseFloat(e.amount);
+        if(e.type === 'earning') {
+            runningBal += amt;
+            incomeSeen = true; // Income recorded!
+        } else {
+            runningBal -= amt;
+        }
+        
+        // LOGIC: If we haven't seen income yet this month, force visual balance to 0 (or prevent negative)
+        // User request: "stay it 0 until there is update in income section"
+        let displayBal = runningBal;
+        if (!incomeSeen && runningBal < 0) {
+            displayBal = 0;
+        }
+        
+        return { ...e, balance: displayBal, timestamp: d.getTime() };
+    });
+}
+
+function calculateHealth(entries) {
+    if(entries.length < 5) return { score: 0, label: "Need Data", savingsRate: 0, runway: 0, volatility: "Low", projected: 0, burnRate: 0, monthExp: 0 };
+    
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const recent = entries.filter(e => (now - new Date(e.date))/(1000*60*60*24) <= 30);
+    const income = recent.filter(e => e.type === 'earning').reduce((s,e) => s+parseFloat(e.amount),0);
+    const expense = recent.filter(e => e.type === 'expense').reduce((s,e) => s+parseFloat(e.amount),0);
+    
+    let savingsRate = 0;
+    if(income > 0) savingsRate = ((income - expense) / income) * 100;
+    
+    const monthExp = entries.filter(e => {
+        const d = new Date(e.date);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear && e.type === 'expense';
+    }).reduce((s,e) => s + parseFloat(e.amount), 0);
+    
+    const budget = settings.budget || 20000;
+    const projected = (monthExp / (now.getDate() || 1)) * new Date(currentYear, currentMonth + 1, 0).getDate();
+    
+    const score = Math.min(100, Math.max(0, Math.round(savingsRate + (budget > projected ? 20 : 0))));
+    
+    return {
+        score,
+        label: score > 70 ? "Excellent" : score > 40 ? "Stable" : "Critical",
+        savingsRate: savingsRate.toFixed(0),
+        runway: ((processedEntries[processedEntries.length-1]?.balance || 0) / (expense || 1)).toFixed(1),
+        volatility: "Med",
+        projected,
+        monthExp,
+        burnRate: (expense/30).toFixed(0)
+    };
+}
+
+/* --- RENDER LOGIC --- */
+function renderAll() {
+    processData(rawEntries);
+    
+    const health = calculateHealth(rawEntries);
+    updateHealthUI(health);
     
     // Filter
-    const matches = uniqueCats.filter(c => c.toLowerCase().includes(val));
+    const mode = $("viewMode").value;
+    const fYear = parseInt($("filterYear").value);
+    const fMonth = parseInt($("filterMonth").value);
+    const fDay = $("filterDay").value;
+    const fCat = $("filterCategory").value.toLowerCase();
     
-    list.innerHTML = '';
-    if (matches.length > 0 && val.length > 0) {
-      list.style.display = 'block';
-      matches.forEach(c => {
-        const li = document.createElement('div');
-        li.className = 'autocomplete-item';
-        // Highlight match
-        const regex = new RegExp(`(${val})`, 'gi');
-        const highlighted = c.replace(regex, '<span class="font-bold text-blue-600">$1</span>');
-        li.innerHTML = `<span>${highlighted}</span>`;
-        
-        li.addEventListener('click', () => {
-          input.value = c;
-          list.style.display = 'none';
-          renderWithFilters(); // Auto-apply
-        });
-        list.appendChild(li);
-      });
-    } else {
-      list.style.display = 'none';
-    }
-  });
+    let filtered = processedEntries.filter(e => {
+        const d = new Date(e.date);
+        const matchCat = e.category.toLowerCase().includes(fCat) || e.source?.toLowerCase().includes(fCat);
+        if(!matchCat) return false;
 
-  // Hide on click outside
-  document.addEventListener('click', (e) => {
-    if (!input.contains(e.target) && !list.contains(e.target)) {
-      list.style.display = 'none';
-    }
-  });
-  
-  // Also hook into the Add Entry category input
-  inpCategory.addEventListener('focus', () => {
-    // Populate datalist for native autocomplete behavior
-    const datalist = $("categoryList");
-    datalist.innerHTML = '';
-    const uniqueCats = [...new Set(entries.map(e => e.category))].sort();
-    uniqueCats.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c;
-      datalist.appendChild(opt);
+        if (mode === 'all') return true;
+        if (d.getFullYear() !== fYear) return false;
+        if (mode === 'yearly') return true;
+        if ((d.getMonth() + 1) !== fMonth) return false;
+        if (mode === 'monthly') return true;
+        if (fDay !== 'all' && d.getDate() !== parseInt(fDay)) return false;
+        return true;
     });
-  });
-}
 
-/* ============================
-   NEW: Sorting Logic
-   ============================ */
-function setupSorting() {
-  sortBy.addEventListener('change', () => {
-    renderWithFilters();
-  });
-}
+    // Sorting
+    const sortMode = $("sortBy").value;
+    filtered.sort((a,b) => {
+        if(sortMode === 'date-asc') return a.timestamp - b.timestamp;
+        if(sortMode === 'date-desc') return b.timestamp - a.timestamp;
+        if(sortMode === 'amt-high') return b.amount - a.amount;
+        if(sortMode === 'amt-low') return a.amount - b.amount;
+    });
 
-/* ============================
-   Core App Logic
-   ============================ */
-let editingId = null;
-
-// Add/Update
-btnAdd.addEventListener("click", async () => {
-  if (!isFirebaseReady) return;
-  
-  const date = inpDate.value;
-  const category = inpCategory.value.trim();
-  const amount = parseFloat(inpAmount.value);
-  const type = inpType.value;
-  const note = inpNote.value.trim();
-  
-  if(!date || !category || isNaN(amount)) return alert("Please fill required fields.");
-  
-  btnAdd.disabled = true;
-  btnAdd.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-  
-  try {
-    const data = { date, category, amount, type, note, recurring: inpRecurring.checked };
+    // Pagination
+    const start = (currentPage - 1) * pageSize;
+    const paged = filtered.slice(start, start + pageSize);
     
-    if(editingId) {
-      await setDoc(getEntryDoc(editingId), data);
-      editingId = null;
-    } else {
-      await addDoc(getEntriesCollection(), data);
-    }
-    clearForm();
-  } catch(e) {
-    console.error(e);
-    alert("Save failed.");
-  }
-  btnAdd.disabled = false;
-  btnAdd.innerHTML = '<i class="fas fa-check"></i> Save Entry';
-});
-
-function clearForm(){
-  inpDate.value = todayISO();
-  inpType.value = "expense";
-  inpCategory.value = "";
-  inpAmount.value = "";
-  inpNote.value = "";
-  inpRecurring.checked = false;
-  editingId = null;
-  btnAdd.innerHTML = '<i class="fas fa-plus"></i> Save Entry';
-}
-
-// Delete / Edit Global Hooks
-window.startEdit = (id) => {
-  const e = entries.find(x => x.id === id);
-  if(!e) return;
-  editingId = id;
-  inpDate.value = e.date;
-  inpType.value = e.type;
-  inpCategory.value = e.category;
-  inpAmount.value = e.amount;
-  inpNote.value = e.note || "";
-  inpRecurring.checked = !!e.recurring;
-  btnAdd.innerHTML = '<i class="fas fa-save"></i> Update Entry';
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-};
-
-window.deleteEntry = async (id) => {
-  if(!confirm("Delete this entry?")) return;
-  try { await deleteDoc(getEntryDoc(id)); } catch(e) { console.error(e); }
-};
-
-/* ============================
-   Rendering & Analytics
-   ============================ */
-function listenForEntries() {
-  if(entriesUnsubscribe) entriesUnsubscribe();
-  entriesUnsubscribe = onSnapshot(getEntriesCollection(), (snap) => {
-    entries = [];
-    snap.forEach(d => entries.push({id: d.id, ...d.data()}));
-    renderWithFilters();
-  });
-}
-
-// Master Render Function
-function renderWithFilters() {
-  if(!isFirebaseReady) return;
-
-  const mode = viewMode.value;
-  const catFilter = filterCategory.value.trim().toLowerCase();
-  
-  let filtered = entries.slice();
-
-  // 1. Date Filtering
-  if (mode === 'daily') {
-    const y = parseInt(filterYear.value);
-    const m = parseInt(filterMonth.value);
-    filtered = filtered.filter(e => {
-      const d = new Date(e.date);
-      return d.getFullYear() === y && (d.getMonth()+1) === m;
-    });
+    renderTable(paged);
+    updateCharts(filtered, fYear, fMonth);
     
-    // NEW: Day Filter
-    const dayVal = filterDay.value;
-    if(dayVal !== 'all') {
-      const dVal = parseInt(dayVal);
-      filtered = filtered.filter(e => new Date(e.date).getDate() === dVal);
-    }
-  } else if (mode === 'monthly') {
-    const y = parseInt(filterYear.value);
-    filtered = filtered.filter(e => new Date(e.date).getFullYear() === y);
-  } else if (mode === 'yearly') {
-    const from = parseInt(filterYearFrom.value);
-    const to = parseInt(filterYearTo.value);
-    filtered = filtered.filter(e => {
-      const y = new Date(e.date).getFullYear();
-      return y >= from && y <= to;
-    });
-  }
+    $("pageInd").innerText = `Page ${currentPage} of ${Math.ceil(filtered.length/pageSize) || 1}`;
+}
 
-  // 2. Category Filtering
-  if(catFilter) {
-    filtered = filtered.filter(e => e.category.toLowerCase().includes(catFilter));
-  }
-
-  // 3. Sorting (NEW)
-  const sortVal = sortBy.value;
-  filtered.sort((a, b) => {
-    if(sortVal === 'date-desc') return b.date.localeCompare(a.date) || b.id.localeCompare(a.id);
-    if(sortVal === 'date-asc') return a.date.localeCompare(b.date) || a.id.localeCompare(b.id);
-    if(sortVal === 'amount-desc') return b.amount - a.amount;
-    if(sortVal === 'amount-asc') return a.amount - b.amount;
-    if(sortVal === 'category-asc') return a.category.localeCompare(b.category);
-    return 0;
-  });
-
-  renderTable(filtered);
-  updateSummary(filtered);
-  renderCharts(filtered, mode);
+function updateHealthUI(health) {
+    $("healthScore").innerText = health.score;
+    $("healthLabel").innerText = health.label;
+    $("healthRing").style.setProperty('--progress', `${health.score * 3.6}deg`);
+    $("metricRunway").innerText = `${health.runway} Mo`;
+    $("metricSavingsRate").innerText = `${health.savingsRate}%`;
+    
+    const budget = settings.budget || 20000;
+    const pct = Math.min(100, (health.monthExp / budget) * 100);
+    $("monthProgressBar").style.width = `${pct}%`;
+    $("monthProgressTxt").innerText = `${pct.toFixed(0)}%`;
+    $("predTotal").innerText = formatCur(health.projected);
+    $("burnRate").innerText = formatCur(health.burnRate);
 }
 
 function renderTable(list) {
-  const tbody = $("entriesTbody");
-  tbody.innerHTML = "";
-  
-  if(list.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-muted italic">No entries found for this period.</td></tr>`;
-    return;
-  }
-
-  list.forEach(e => {
-    const isExp = e.type === 'expense';
-    const row = document.createElement("tr");
-    row.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group";
-    row.innerHTML = `
-      <td class="p-3 whitespace-nowrap text-slate-700 dark:text-slate-300">
-        ${e.date}
-        ${e.recurring ? '<i class="fas fa-redo text-blue-400 ml-1 text-[10px]" title="Recurring"></i>' : ''}
-      </td>
-      <td class="p-3 font-medium text-slate-800 dark:text-slate-200">${escapeHtml(e.category)}</td>
-      <td class="p-3 text-slate-500 text-xs truncate max-w-[150px]">${escapeHtml(e.note)}</td>
-      <td class="p-3 text-right font-bold ${isExp ? 'text-red-500' : 'text-green-500'}">
-        ${isExp ? '-' : '+'}₹${Number(e.amount).toFixed(2)}
-      </td>
-      <td class="p-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">
-        <button onclick="startEdit('${e.id}')" class="text-blue-500 hover:text-blue-700 mx-1"><i class="fas fa-pen"></i></button>
-        <button onclick="deleteEntry('${e.id}')" class="text-red-500 hover:text-red-700 mx-1"><i class="fas fa-trash-alt"></i></button>
-      </td>
-    `;
-    tbody.appendChild(row);
-  });
-}
-
-function updateSummary(list) {
-  const earned = list.filter(e => e.type === 'earning').reduce((s,e) => s + (+e.amount), 0);
-  const spent = list.filter(e => e.type === 'expense').reduce((s,e) => s + (+e.amount), 0);
-  const net = earned - spent;
-  
-  sumEarned.textContent = `₹${earned.toFixed(2)}`;
-  sumSpent.textContent = `₹${spent.toFixed(2)}`;
-  sumNet.textContent = `₹${net.toFixed(2)}`;
-  sumNet.className = `text-sm md:text-base font-bold truncate ${net >= 0 ? 'text-blue-600' : 'text-red-600'}`;
-  
-  // Budget Logic
-  if(settings.budget) {
-    const b = +settings.budget;
-    // Calculate spent for CURRENT month context regardless of view, OR use filtered view?
-    // User expectation: Budget is usually monthly. 
-    // We check if current filtered view matches a specific month, if so use that, else use current month
-    // Simple logic: Use displayed expenses if View=Daily (Month), else calculate current month
-    let relevantSpent = spent; // Default to displayed
+    const tbody = $("txTableBody");
+    tbody.innerHTML = "";
     
-    // If not in daily view, calculate current month spent specifically for the alert
-    if(viewMode.value !== 'daily') {
-       const now = new Date();
-       relevantSpent = entries.filter(e => {
-         const d = new Date(e.date);
-         return e.type === 'expense' && d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
-       }).reduce((s,e) => s + (+e.amount), 0);
-    }
-
-    budgetAlert.classList.add("hidden");
-    if(relevantSpent > b) {
-       budgetAlert.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Over Budget! (₹${relevantSpent.toFixed(0)} / ₹${b})`;
-       budgetAlert.classList.remove("hidden");
-    } else if (relevantSpent > b * 0.85) {
-       budgetAlert.innerHTML = `<i class="fas fa-info-circle"></i> Near Budget (₹${relevantSpent.toFixed(0)} / ₹${b})`;
-       budgetAlert.className = "mt-2 text-xs p-2 rounded bg-yellow-100 text-yellow-800";
-       budgetAlert.classList.remove("hidden");
-    }
-  }
+    list.forEach(e => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors border-b dark:border-slate-800";
+        const isExp = e.type === 'expense';
+        
+        tr.innerHTML = `
+            <td class="p-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                <div class="font-bold">${e.date}</div>
+                <div class="text-[10px] uppercase text-muted">${e.source || 'CASH'}</div>
+            </td>
+            <td class="p-3">
+                <div class="font-bold text-slate-800 dark:text-white">${e.category}</div>
+                <div class="text-[10px] text-muted truncate max-w-[120px]">${e.note || ''}</div>
+            </td>
+            <td class="p-3 text-right font-bold ${isExp ? 'text-red-500' : 'text-green-600'}">
+                ${isExp ? '-' : '+'}${formatCur(e.amount)}
+            </td>
+            <td class="p-3 text-right font-mono text-muted text-[10px]">
+                ${formatCur(e.balance)}
+            </td>
+            <td class="p-3 text-center flex justify-center gap-2">
+                <button class="text-blue-500 hover:text-blue-700 p-1" title="Edit" onclick="window.editTx('${e.id}')"><i class="fas fa-edit"></i></button>
+                <button class="text-slate-400 hover:text-red-500 p-1" title="Delete" onclick="window.delTx('${e.id}')"><i class="fas fa-trash"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
-/* ============================
-   Charts (Enhanced)
-   ============================ */
-function renderCharts(list, mode) {
-  // 1. Prepare Data
-  let labels = [], dataEarned = [], dataSpent = [];
-  
-  if (mode === 'daily') {
-    // Show days of month
-    const year = parseInt(filterYear.value);
-    const month = parseInt(filterMonth.value);
+/* --- CHARTS --- */
+let barChartInst = null;
+let pieChartInst = null;
+
+function updateCharts(list, year, month) {
+    // 1. Income vs Expense (Grouped Bar by Day) - Per user screenshot
+    // Filter list for the selected month to show daily bars
     const daysInMonth = new Date(year, month, 0).getDate();
-    labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
-    dataEarned = new Array(daysInMonth).fill(0);
-    dataSpent = new Array(daysInMonth).fill(0);
+    const days = Array.from({length: daysInMonth}, (_, i) => i + 1);
     
-    list.forEach(e => {
-      const d = new Date(e.date).getDate();
-      if(e.type === 'earning') dataEarned[d-1] += e.amount;
-      else dataSpent[d-1] += e.amount;
-    });
-  } else if (mode === 'monthly') {
-    labels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-    dataEarned = new Array(12).fill(0);
-    dataSpent = new Array(12).fill(0);
-    list.forEach(e => {
-      const m = new Date(e.date).getMonth();
-      if(e.type === 'earning') dataEarned[m] += e.amount;
-      else dataSpent[m] += e.amount;
-    });
-  } else {
-    // Yearly range
-    const start = parseInt(filterYearFrom.value);
-    const end = parseInt(filterYearTo.value);
-    for(let y=start; y<=end; y++) {
-      labels.push(y);
-      let yEarned = 0, ySpent = 0;
-      list.filter(e => new Date(e.date).getFullYear() === y).forEach(e => {
-        if(e.type === 'earning') yEarned += e.amount;
-        else ySpent += e.amount;
-      });
-      dataEarned.push(yEarned);
-      dataSpent.push(ySpent);
-    }
-  }
+    const dailyInc = new Array(daysInMonth).fill(0);
+    const dailyExp = new Array(daysInMonth).fill(0);
 
-  // 2. Bar Chart (Income vs Expense)
-  const ctxBar = $("barChart").getContext('2d');
-  if(barChart) barChart.destroy();
-  barChart = new Chart(ctxBar, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        { label: 'Income', data: dataEarned, backgroundColor: '#22c55e', borderRadius: 4 },
-        { label: 'Expense', data: dataSpent, backgroundColor: '#ef4444', borderRadius: 4 }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom' } },
-      scales: { 
-        x: { grid: { display: false } },
-        y: { beginAtZero: true, border: { dash: [4, 4] } }
-      }
-    }
-  });
-
-  // 3. NEW: Trend Chart (Line)
-  const ctxTrend = $("trendChart").getContext('2d');
-  if(trendChart) trendChart.destroy();
-  trendChart = new Chart(ctxTrend, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Net Balance',
-          data: labels.map((_, i) => dataEarned[i] - dataSpent[i]),
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          fill: true,
-          tension: 0.4,
-          pointRadius: 2
+    list.forEach(e => {
+        const d = new Date(e.date);
+        // Only process if it matches the filter (filtered list already handles this mostly, but double check date range logic if viewing 'All')
+        // Assuming user wants to see the breakdown of the CURRENT view
+        if(d.getMonth() + 1 === month && d.getFullYear() === year) {
+             const dayIdx = d.getDate() - 1;
+             if(e.type === 'earning') dailyInc[dayIdx] += parseFloat(e.amount);
+             else dailyExp[dayIdx] += parseFloat(e.amount);
         }
-      ]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` Net: ₹${c.raw}` } } },
-      scales: { x: { grid: { display: false } } }
-    }
-  });
+    });
 
-  // 4. Pie Chart (Categories)
-  const ctxPie = $("pieChart").getContext('2d');
-  if(pieChart) pieChart.destroy();
-  
-  const catMap = {};
-  list.filter(e => e.type === 'expense').forEach(e => {
-    catMap[e.category] = (catMap[e.category] || 0) + e.amount;
-  });
-  
-  const sortedCats = Object.entries(catMap).sort((a,b) => b[1] - a[1]);
-  
-  pieChart = new Chart(ctxPie, {
-    type: 'doughnut',
-    data: {
-      labels: sortedCats.map(x => x[0]),
-      datasets: [{
-        data: sortedCats.map(x => x[1]),
-        backgroundColor: [
-          '#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444'
-        ],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      cutout: '65%',
-      plugins: { legend: { position: 'right', labels: { boxWidth: 10, usePointStyle: true } } }
-    }
-  });
+    const barCtx = $("barChart").getContext("2d");
+    if(barChartInst) barChartInst.destroy();
+    barChartInst = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: days, // 1, 2, 3...
+            datasets: [
+                { label: 'Income', data: dailyInc, backgroundColor: '#10b981', borderRadius: 4 }, // Green
+                { label: 'Expense', data: dailyExp, backgroundColor: '#ef4444', borderRadius: 4 } // Red
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' } },
+            scales: { 
+                x: { grid: { display: false } },
+                y: { beginAtZero: true, border: { dash: [4, 4] } }
+            }
+        }
+    });
+
+    // 2. Spending by Category (Doughnut with Legend Right)
+    const catMap = {};
+    list.filter(e => e.type === 'expense').forEach(e => catMap[e.category] = (catMap[e.category]||0) + parseFloat(e.amount));
+    const sortedCats = Object.entries(catMap).sort((a,b)=>b[1]-a[1]); // Top categories
+    
+    // Vibrant colors matching screenshot vibe
+    const palette = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ef4444', '#14b8a6', '#f97316'];
+
+    const pieCtx = $("pieChart").getContext("2d");
+    if(pieChartInst) pieChartInst.destroy();
+    pieChartInst = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: sortedCats.map(c=>c[0]),
+            datasets: [{
+                data: sortedCats.map(c=>c[1]),
+                backgroundColor: palette,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'right', // Legend on right as requested
+                    labels: { usePointStyle: true, boxWidth: 8, font: { size: 10 } }
+                }
+            }
+        }
+    });
 }
 
-/* ============================
-   Settings & Utils
-   ============================ */
-async function loadSettings() {
-  try {
-    const snap = await getDoc(getSettingsDoc());
-    if(snap.exists()) settings = snap.data();
-  } catch(e) { console.error(e); }
-  settings = { budget: null, reminderEnabled: false, darkMode: false, ...settings };
+/* --- FIREBASE OPS --- */
+function subscribeData() {
+    unsubscribe = onSnapshot(collection(db, `users/${userId}/entries`), (snap) => {
+        rawEntries = [];
+        snap.forEach(d => rawEntries.push({ id: d.id, ...d.data() }));
+        renderAll();
+    });
 }
 
-async function saveSettings() {
-  if(!isFirebaseReady) return;
-  await setDoc(getSettingsDoc(), settings);
-}
-
-reminderToggle.addEventListener("change", async () => {
-  settings.reminderEnabled = reminderToggle.checked;
-  await saveSettings();
-  if(settings.reminderEnabled && Notification.permission !== "granted") Notification.requestPermission();
-});
-
-darkToggle.addEventListener("click", async () => {
-  const isDark = document.body.getAttribute('data-theme') === 'dark';
-  document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  settings.darkMode = !isDark;
-  await saveSettings();
-});
-
-applyFilter.addEventListener("click", () => renderWithFilters());
-resetFilter.addEventListener("click", () => {
-  filterCategory.value = "";
-  inpDate.value = todayISO();
-  viewMode.value = "daily";
-  filterDay.value = "all";
-  updateFilterUI();
-  applyFilter.click();
-});
-
-function escapeHtml(s) {
-  return s ? String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#039;'}[m])) : "";
-}
-
-// Auth Handlers
-$("login-form").addEventListener("submit", e => { e.preventDefault(); authHandler(signInWithEmailAndPassword, "login"); });
-$("signup-form").addEventListener("submit", e => { e.preventDefault(); authHandler(createUserWithEmailAndPassword, "signup"); });
-
-async function authHandler(method, prefix) {
-  const email = $(prefix+"-email").value, pass = $(prefix+"-password").value;
-  const errDiv = $(prefix+"-error");
-  try { await method(auth, email, pass); } catch(e) { 
-    errDiv.textContent = e.message; errDiv.classList.remove("hidden"); 
-  }
-}
-
-$("show-signup").onclick = () => { $("login-form").classList.add("hidden"); $("signup-form").classList.remove("hidden"); };
-$("show-login").onclick = () => { $("signup-form").classList.add("hidden"); $("login-form").classList.remove("hidden"); };
-btnSignOut.onclick = () => signOut(auth);
-
-
-/* ============================
-   EXPORT / IMPORT LOGIC
-   ============================ */
-
-// 1. Export CSV
-exportBtn.addEventListener('click', () => {
-  if (!entries.length) return alert("No data to export");
-  
-  // Headers
-  const headers = ["Date", "Type", "Category", "Amount", "Note", "Recurring"];
-  const csvRows = [headers.join(",")];
-  
-  entries.forEach(e => {
-    // Escape quotes by doubling them, and wrap fields in quotes if they contain commas or quotes
-    const escape = (txt) => {
-       if(!txt) return "";
-       const str = String(txt);
-       if(str.includes(",") || str.includes('"') || str.includes("\n")) {
-         return `"${str.replace(/"/g, '""')}"`;
-       }
-       return str;
+async function addEntry() {
+    const data = {
+        date: $("inpDate").value,
+        type: $("inpType").value,
+        category: $("inpCategory").value,
+        amount: parseFloat($("inpAmount").value),
+        note: $("inpNote").value,
+        source: $("inpSource").value,
+        recurring: $("inpRecurring").checked
     };
     
-    const row = [
-      escape(e.date),
-      escape(e.type),
-      escape(e.category),
-      e.amount,
-      escape(e.note),
-      e.recurring ? "Yes" : "No"
-    ];
-    csvRows.push(row.join(","));
-  });
-  
-  const csvString = csvRows.join("\n");
-  const blob = new Blob([csvString], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  
-  // Create hidden link to trigger download
-  const a = document.createElement("a");
-  a.setAttribute("hidden", "");
-  a.setAttribute("href", url);
-  a.setAttribute("download", `expenses_backup_${todayISO()}.csv`);
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-});
-
-// 2. Import CSV
-importBtn.addEventListener('click', () => importFile.click());
-
-importFile.addEventListener('change', async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = async (event) => {
-    const text = event.target.result;
-    const rows = text.split("\n").slice(1); // Skip header
+    if(!data.date || !data.amount) return alert("Date and Amount required");
     
-    let count = 0;
-    
-    // Helper to split CSV line respecting quotes
-    const parseCSVLine = (line) => {
-      const result = [];
-      let current = '';
-      let inQuotes = false;
-      
-      for(let i=0; i<line.length; i++) {
-        const char = line[i];
-        if(char === '"') {
-          if(inQuotes && line[i+1] === '"') { // Escaped quote
-            current += '"';
-            i++;
-          } else {
-            inQuotes = !inQuotes;
-          }
-        } else if (char === ',' && !inQuotes) {
-          result.push(current);
-          current = '';
+    $("btnAdd").disabled = true;
+    try {
+        if(editingId) {
+            await updateDoc(doc(db, `users/${userId}/entries`, editingId), data);
+            alert("Updated successfully");
         } else {
-          current += char;
+            data.createdAt = new Date().toISOString();
+            await addDoc(collection(db, `users/${userId}/entries`), data);
         }
-      }
-      result.push(current);
-      return result;
-    };
+        clearForm();
+    } catch(e) { console.error(e); alert("Error saving"); }
+    $("btnAdd").disabled = false;
+}
 
-    if(!confirm(`Found ${rows.length} lines. Import valid entries?`)) return;
+window.editTx = (id) => {
+    const e = rawEntries.find(x => x.id === id);
+    if(!e) return;
+    
+    editingId = id;
+    $("inpDate").value = e.date;
+    $("inpType").value = e.type;
+    $("inpCategory").value = e.category;
+    $("inpAmount").value = e.amount;
+    $("inpNote").value = e.note || "";
+    $("inpSource").value = e.source || "Cash";
+    $("inpRecurring").checked = !!e.recurring;
+    
+    $("formTitle").innerText = "Edit Transaction";
+    $("btnAdd").innerText = "Update Transaction";
+    $("btnAdd").classList.replace("btn-primary", "bg-orange-500");
+    $("btnAdd").classList.add("text-white");
+    
+    $("addEntryCard").scrollIntoView({ behavior: 'smooth' });
+};
 
-    for (const row of rows) {
-      if (!row.trim()) continue;
-      
-      const cols = parseCSVLine(row.trim());
-      
-      // Expected: Date, Type, Category, Amount, Note, Recurring
-      if (cols.length >= 4) {
-           let [date, type, category, amount, note, recurring] = cols;
-           
-           // Clean up quotes if manual parsing didn't catch edge cases or simple CSV
-           if(date && type && category && amount) {
-               try {
-                   await addDoc(getEntriesCollection(), {
-                       date: date.trim(),
-                       type: type.trim().toLowerCase(),
-                       category: category.trim(),
-                       amount: parseFloat(amount),
-                       note: note ? note.trim() : "",
-                       recurring: recurring && recurring.toLowerCase().includes("yes")
-                   });
-                   count++;
-               } catch(err) {
-                   console.error("Skipped row due to error", row, err);
-               }
-           }
-      }
+window.delTx = async (id) => {
+    if(confirm("Delete this transaction?")) await deleteDoc(doc(db, `users/${userId}/entries`, id));
+};
+
+function clearForm() {
+    editingId = null;
+    $("inpAmount").value = ""; $("inpNote").value = ""; $("inpCategory").value = "";
+    $("formTitle").innerText = "New Transaction";
+    $("btnAdd").innerText = "Add Transaction";
+    $("btnAdd").classList.remove("bg-orange-500");
+    $("btnAdd").classList.add("btn-primary");
+    $("dupWarn").classList.add("hidden");
+}
+
+function checkDuplicates() {
+    if(editingId) return;
+    const amt = parseFloat($("inpAmount").value);
+    const date = $("inpDate").value;
+    const dup = rawEntries.find(e => e.amount == amt && e.date === date);
+    if(dup) $("dupWarn").classList.remove("hidden");
+    else $("dupWarn").classList.add("hidden");
+}
+
+/* --- AUTH UI HANDLERS --- */
+let isLogin = true;
+function toggleAuthMode() {
+    isLogin = !isLogin;
+    $("toggle-auth-mode").innerText = isLogin ? "Need an account? Sign Up" : "Have an account? Login";
+    $("auth-form").querySelector("button").innerText = isLogin ? "Access Dashboard" : "Create Dashboard";
+}
+async function handleAuth(e) {
+    e.preventDefault();
+    const email = $("auth-email").value;
+    const pass = $("auth-pass").value;
+    const errEl = $("auth-error");
+    
+    try {
+        if(isLogin) await signInWithEmailAndPassword(auth, email, pass);
+        else await createUserWithEmailAndPassword(auth, email, pass);
+    } catch(err) {
+        errEl.innerText = err.message;
+        errEl.classList.remove("hidden");
     }
-    alert(`Imported ${count} entries successfully!`);
-    importFile.value = ""; // Reset
-  };
-  reader.readAsText(file);
-});
+}
 
-// Init
-initFirebase();
+/* --- SETTINGS & HELPERS --- */
+async function loadSettings() {
+    try {
+        const snap = await getDoc(doc(db, `users/${userId}/settings/config`));
+        if(snap.exists()) {
+            settings = { ...settings, ...snap.data() };
+            if(settings.darkMode) document.body.setAttribute("data-theme", "dark");
+        }
+    } catch(e) {}
+}
+
+function toggleTheme() {
+    const isDark = document.body.getAttribute("data-theme") === "dark";
+    document.body.setAttribute("data-theme", isDark ? "light" : "dark");
+    settings.darkMode = !isDark;
+    setDoc(doc(db, `users/${userId}/settings/config`), settings);
+}
+
+function changePage(dir) {
+    const max = Math.ceil(processedEntries.length / pageSize) || 1;
+    if(currentPage + dir > 0 && currentPage + dir <= max) {
+        currentPage += dir;
+        renderAll();
+    }
+}
+
+init();
 
 </script>
 </body>
